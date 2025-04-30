@@ -66,7 +66,7 @@ export async function signUp(params: SignUpParams) {
 
 
 
-  export async function signIn(params: SignInParams) {
+export async function signIn(params: SignInParams) {
     const { email, idToken } = params;
   
     try {
@@ -88,7 +88,7 @@ export async function signUp(params: SignUpParams) {
     }
   }
 
-  export async function getCurrentUser(): Promise<User | null> {
+export async function getCurrentUser(): Promise<User | null> {
     const cookieStore = await cookies();
   
     const sessionCookie = cookieStore.get("session")?.value;
@@ -117,7 +117,7 @@ export async function signUp(params: SignUpParams) {
    }
 
 
-   export async function isAuthenticated() {
+export async function isAuthenticated() {
     const user = await getCurrentUser();
     return !!user;
   }
