@@ -7,31 +7,38 @@ export async function GET(){
     return Response.json({
         "status": "ok",
         "data": {
-            "message": "hello world"
+            "message": "Thank you "
         }
     })
 }
 
 export async function POST(request: Request){
+    // console.log('Received request to /api/vapi/generate');
+
+    // console.log('Request body:', body);
+    const { type, role, level, techstack, amount, userid } = await request.json();
+
     try {
-        const body = await request.json();
         
-        if (!body) {
-            return Response.json({
-                status: "error",
-                message: "Request body is empty"
-            }, { status: 400 });
-        }
 
-        const { type, role, level, techstack, amount, userid } = body;
+        
+        // if (!body) {
+        //     console.log('Empty request body');
+        //     return Response.json({
+        //         status: "error",
+        //         message: "Request body is empty"
+        //     }, { status: 400 });
+        // }
 
-        // Validate required fields
-        if (!type || !role || !level || !techstack || !amount || !userid) {
-            return Response.json({
-                status: "error",
-                message: "Missing required fields. Required: type, role, level, techstack, amount, userid"
-            }, { status: 400 });
-        }
+
+        // // Validate required fields
+        // if (!type || !role || !level || !techstack || !amount || !userid) {
+        //     console.log('Missing required fields:', { type, role, level, techstack, amount, userid });
+        //     return Response.json({
+        //         status: "error",
+        //         message: "Missing required fields. Required: type, role, level, techstack, amount, userid"
+        //     }, { status: 400 });
+        // }
 
         const {text:questions}=await generateText({
             model:google('gemini-2.0-flash-001'),
@@ -49,28 +56,21 @@ export async function POST(request: Request){
         Thank you! <3
     `,
         });
-        const interview={
-            role,type,level,
-            techstack:techstack.split(','),
+        const interview = {
+            role, type, level,
+            techstack: techstack.split(','),
             questions: JSON.parse(questions),
-            userId:userid,
-            finalized:true,
+            userId: userid,
+            finalized: true,
             coverImage: getRandomInterviewCover(),
             createdAt: new Date().toISOString(),
-            
         }
         await db.collection("interviews").add(interview);
-        return Response.json({success:true},{status:200})
 
-    }catch(error){
-        console.log(error);
-        return Response.json({
-            "status": "error 500",
-            "data": {
-                "message": "error"
-            }
-        })
+        return Response.json({ success: true }, { status: 200 });
+      } catch (error) {
+        console.error("Error:", error);
+        return Response.json({ success: false, error: error }, { status: 500 });
+      }
     }
-}
-
 

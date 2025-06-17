@@ -96,6 +96,11 @@ export async function getCurrentUser(): Promise<User | null> {
   
     try {
       const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
+      
+      if (!decodedClaims || !decodedClaims.uid) {
+        console.error("Invalid session claims");
+        return null;
+      }
   
       // get user info from db
       const userRecord = await db
@@ -109,16 +114,52 @@ export async function getCurrentUser(): Promise<User | null> {
         id: userRecord.id,
       } as User;
     } catch (error) {
-      console.log(error);
+      console.error("Session verification error:", error);
   
       // Invalid or expired session
       return null;
     }
-   }
+}
 
 
 export async function isAuthenticated() {
     const user = await getCurrentUser();
     return !!user;
+}     
+
+export async function getInterviewByUserId(userId: string) :Promise<Interview[] | null> {
+const interview = await db
+.collection("interviews")
+.where("userId", "==", userId)
+.orderBy('createdAt','desc')
+.get();
+
+return (interview).docs.map((doc)=>({
+  id:doc.id,
+  ...doc.data()
+})) as Interview[];
+
+
+
+}
+
+export async function getLatestInetrview(params: GetLatestInterviewsParams) :Promise<Interview[] | null> {
+  const {userId,limit=20}=params;
+  
+  const interview = db
+  .collection("interviews")
+  .where("finalized", "==", true)
+  .orderBy('createdAt','desc')
+  .where('userId','!=',userId)
+  .limit(limit)
+  .get();
+  
+  return (await interview).docs.map((doc)=>({
+    id:doc.id,
+    ...doc.data()
+  })) as Interview[];
+  
+  
+  
   }
   
