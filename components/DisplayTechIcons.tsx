@@ -28,7 +28,7 @@ const DisplayTechIcons = ({ techStack }: TechIconProps) => {
             width={100}
             height={100}
             className="size-5"
-            onError={handleImgError}
+            
           />
         </div>
       ))}
