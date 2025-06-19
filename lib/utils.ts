@@ -24,25 +24,15 @@ const checkIconExists = async (url: string) => {
   }
 };
 
-export const getTechLogos = async (techArray: string[]) => {
-  const logoURLs = techArray.map((tech, index) => {
+export const getTechLogos = (techArray: string[]) => {
+  return techArray.map((tech, index) => {
     const normalized = normalizeTechName(tech);
     return {
-      tech: `${tech}-${index}`, // Make the tech key unique
-      displayTech: tech, // Keep original tech name for display
+      tech: `${tech}-${index}`,
+      displayTech: tech,
       url: `${techIconBaseURL}/${normalized}/${normalized}-original.svg`,
     };
   });
-
-  const results = await Promise.all(
-    logoURLs.map(async ({ tech, displayTech, url }) => ({
-      tech,
-      displayTech,
-      url: (await checkIconExists(url)) ? url : "/tech.svg",
-    }))
-  );
-
-  return results;
 };
 
 export const getRandomInterviewCover = () => {

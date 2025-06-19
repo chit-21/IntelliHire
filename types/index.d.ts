@@ -97,3 +97,6 @@ interface InterviewFormProps {
 interface TechIconProps {
   techStack: string[];
 }
+
+export type { Interview };
+export type { TechIconProps };

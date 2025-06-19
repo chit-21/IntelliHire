@@ -1,9 +1,14 @@
 import Image from "next/image";
-
 import { cn, getTechLogos } from "@/lib/utils";
+import { type TechIconProps } from '@/types';
 
-const DisplayTechIcons = async ({ techStack }: TechIconProps) => {
-  const techIcons = await getTechLogos(techStack);
+const DisplayTechIcons = ({ techStack }: TechIconProps) => {
+  const techIcons = getTechLogos(techStack);
+
+  // Fallback handler for broken images
+  const handleImgError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    e.currentTarget.src = "/tech.svg";
+  };
 
   return (
     <div className="flex flex-row">
@@ -23,6 +28,7 @@ const DisplayTechIcons = async ({ techStack }: TechIconProps) => {
             width={100}
             height={100}
             className="size-5"
+            onError={handleImgError}
           />
         </div>
       ))}
