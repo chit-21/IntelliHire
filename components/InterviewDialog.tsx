@@ -13,32 +13,73 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from "@/components/ui/textarea";
 import { LoaderCircle } from "lucide-react";
 import { chatSession } from "@/lib/gemini";
+import { useRouter } from "next/navigation";
 
-export default function InterviewDialog() {
+interface InterviewDialogProps {
+  onInterviewCreated?: () => void;
+}
+
+const INTERVIEW_TYPES = [
+  { value: "Technical", label: "Technical" },
+  { value: "HR", label: "HR" },
+  { value: "Behavioral", label: "Behavioral" },
+  { value: "Mixed", label: "Mixed" },
+];
+
+export default function InterviewDialog({ onInterviewCreated }: InterviewDialogProps) {
   const [jobPosition, setJobPosition] = useState("");
   const [jobDescription, setJobDescription] = useState("");
   const [jobExperience, setJobExperience] = useState("");
   const [numQuestions, setNumQuestions] = useState("");
+  const [interviewType, setInterviewType] = useState(INTERVIEW_TYPES[0].value);
   const [openDialog, setOpenDialog] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [jsonResponse, setJsonResponse] = useState([]);
+  const router = useRouter();
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     try {
-      console.log(jobDescription, jobExperience, jobPosition, numQuestions);
-      const inputPrompt = `Job position: ${jobPosition}, Job Description: ${jobDescription}, Years of Experience: ${jobExperience}, Depends on Job Position, Job Description and Years of Experience give us ${numQuestions} Interview question along with Answer in JSON format, Give us question and Answer field on JSON,Each question and answer should be in the format:
-    {
-      "question": "Your question here",
-      "answer": "Your answer here"
-    }`;
-
+      const inputPrompt = `Type of Interview: ${interviewType}, Job position: ${jobPosition}, Job Description: ${jobDescription}, Years of Experience: ${jobExperience}, Depends on Type of Interview, Job Position, Job Description and Years of Experience give us ${numQuestions} Interview question along with Answer in JSON format, Give us question and Answer field on JSON,Each question and answer should be in the format:\n{\n  "question": "Your question here",\n  "answer": "Your answer here"\n}`;
       const result = await chatSession.sendMessage(inputPrompt);
-      const text = await result.response.text();
-      console.log("result", text);
+      // Parse Gemini response as JSON
+      let text = await result.response.text();
+      text = text.replace('```json', '').replace('```', '').trim();
+      let questions;
+      try {
+        questions = JSON.parse(text);
+      } catch (err) {
+        setLoading(false);
+        alert('Failed to parse AI response.');
+        return;
+      }
+      setJsonResponse(questions);
+      // Send to API
+      const res = await fetch('/api/interview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jobPosition,
+          jobDescription,
+          jobExperience,
+          numQuestions,
+          questions,
+          interviewType,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || 'Failed to save interview');
+      }
+      const data = await res.json();
+      if (data.status === 'success' && data.id) {
+        router.push(`/interview/${data.id}`);
+      }
+      if (onInterviewCreated) onInterviewCreated();
       setOpenDialog(false);
-    } catch (err) {
-      console.error("Error:", err);
+    } catch (error: any) {
+      alert(error.message || 'Something went wrong');
     } finally {
       setLoading(false);
     }
@@ -104,6 +145,19 @@ export default function InterviewDialog() {
                     className="mb-2 bg-dark-200 border border-primary-200/30 text-light-100 focus-visible:ring-primary-200 px-4 py-2 rounded-lg"
                     onChange={(e) => setNumQuestions(e.target.value)}
                   />
+                </div>
+                <div className="my-4">
+                  <label className="block mb-2 font-medium text-primary-200">Type of Interview</label>
+                  <select
+                    className="mb-2 bg-dark-200 border border-primary-200/30 text-light-100 focus-visible:ring-primary-200 px-4 py-2 rounded-lg w-full"
+                    value={interviewType}
+                    onChange={e => setInterviewType(e.target.value)}
+                    required
+                  >
+                    {INTERVIEW_TYPES.map(type => (
+                      <option key={type.value} value={type.value}>{type.label}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
               <div className="flex gap-3 justify-end mt-2">
