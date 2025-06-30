@@ -3,7 +3,6 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import AuthCard from '@/components/AuthCard';
 
 export default function Home() {
   const { user, loading } = useAuth();
@@ -23,9 +22,17 @@ export default function Home() {
     );
   }
 
+  // Redirect to /login if not authenticated
+  if (!user) {
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login';
+    }
+    return null;
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100">
-      <AuthCard mode="login" />
+      {/* AuthCard component would be rendered here if it were imported */}
     </div>
   );
 }

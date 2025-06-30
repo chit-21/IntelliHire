@@ -3,6 +3,11 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --color-bg: #ffffff;
+  --color-bg-light: #F0FDF4;
+  --color-bg-accent: #E6F4EA;
+  --color-bg-left: #D4EEDA;
+  --color-green: #22C55E;
 }
 
 @theme inline {
@@ -25,12 +30,17 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-@tailwind base;
-@tailwind components;
 @tailwind utilities;
 
 @layer base {
   html {
     @apply font-sans;
   }
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input:not([type]) {
+  color: var(--color-text, #171717);
 }
