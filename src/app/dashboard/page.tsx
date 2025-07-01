@@ -209,7 +209,12 @@ export default function DashboardPage() {
                         <span className="text-xs text-gray-500">Status: {interview.status || 'Pending'}</span>
                         <span className="text-xs text-gray-500">Score: {interview.score ?? 'N/A'}</span>
                       </div>
-                      <button className="mt-4 px-4 py-2 rounded bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors">Take Interview</button>
+                      <button
+                        className="mt-4 px-4 py-2 rounded bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors"
+                        onClick={() => router.push(`/dashboard/interview/${interview.id}`)}
+                      >
+                        Take Interview
+                      </button>
                     </div>
                   ))}
                 </div>
