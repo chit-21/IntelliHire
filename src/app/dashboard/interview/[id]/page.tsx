@@ -1,10 +1,18 @@
 "use client";
 
+import React from 'react';
+import useSpeechToText from 'react-hook-speech-to-text';
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { db } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import Webcam from "react-webcam";
+
+// Add type for SpeechRecognition
+const SpeechRecognition =
+  typeof window !== "undefined"
+    ? (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    : null;
 
 export default function InterviewPage({ params }: { params: { id: string } }) {
   // NOTE: In future Next.js, params will be a Promise and should be unwrapped with use(params). For now, use directly.
@@ -14,8 +22,23 @@ export default function InterviewPage({ params }: { params: { id: string } }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentQ, setCurrentQ] = useState(0);
-  const [webcamEnabled, setWebcamEnabled] = useState(false);
   const webcamRef = useRef<Webcam>(null);
+  const [answers, setAnswers] = useState<string[]>([]);
+  const [recording, setRecording] = useState(false);
+  const [currentTranscript, setCurrentTranscript] = useState('');
+  const recognitionRef = useRef<any>(null);
+
+  const {
+    error: speechError,
+    interimResult,
+    isRecording,
+    results,
+    startSpeechToText,
+    stopSpeechToText,
+  } = useSpeechToText({
+    continuous: true,
+    useLegacyResults: false,
+  });
 
   useEffect(() => {
     if (!id) return;
@@ -38,6 +61,42 @@ export default function InterviewPage({ params }: { params: { id: string } }) {
     fetchInterview();
   }, [id]);
 
+  const handleRecordAnswer = () => {
+    if (isRecording) {
+      stopSpeechToText();
+    } else {
+      startSpeechToText();
+    }
+  };
+
+  const handleShowAnswer = () => {
+    const fullTranscript = [
+      ...results.filter((result) => typeof result === 'object' && 'transcript' in result).map((result: any) => result.transcript),
+      interimResult || ''
+    ].join(' ').trim();
+    console.log('User Answer:', fullTranscript);
+  };
+
+  const handleSubmitAnswer = async () => {
+    // Save transcript to answers if not already
+    setAnswers((prev) => {
+      const updated = [...prev];
+      updated[currentQ] = currentTranscript;
+      return updated;
+    });
+    setCurrentTranscript('');
+    // If last question, generate feedback
+    if (currentQ === questions.length - 1) {
+      // Save feedback to Firestore
+      await updateDoc(doc(db, 'interviews', id), {
+        answers: [...answers.slice(0, currentQ), currentTranscript],
+        status: 'Completed',
+      });
+    } else {
+      setCurrentQ((q) => Math.min(q + 1, questions.length - 1));
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100">
@@ -59,7 +118,7 @@ export default function InterviewPage({ params }: { params: { id: string } }) {
   return (
     <div className="min-h-screen flex flex-col items-center bg-gradient-to-br from-blue-50 to-blue-100 py-12">
       <div className="w-full max-w-5xl bg-white rounded-2xl shadow-xl p-0 flex flex-col md:flex-row overflow-hidden">
-        {/* Left: Question Tabs */}
+        {/* Left: Question Tabs and Navigation */}
         <div className="md:w-1/2 w-full bg-blue-50 p-8 flex flex-col">
           <h1 className="text-2xl font-extrabold text-blue-800 mb-4">{interview.role}</h1>
           <div className="flex flex-wrap gap-2 mb-4">
@@ -94,30 +153,49 @@ export default function InterviewPage({ params }: { params: { id: string } }) {
             </button>
           </div>
         </div>
-        {/* Right: Webcam & Controls */}
+        {/* Right: Webcam, Record, Transcript */}
         <div className="md:w-1/2 w-full p-8 flex flex-col items-center justify-center bg-gradient-to-br from-blue-100 to-blue-200">
-          {!webcamEnabled ? (
+          <div className="w-full flex flex-col items-center">
+            <div className="bg-black w-full max-w-lg aspect-video flex items-center justify-center rounded-xl mb-6">
+              {isRecording ? (
+                <Webcam
+                  audio={false}
+                  ref={webcamRef}
+                  className="rounded-xl shadow-lg w-full max-w-md aspect-video"
+                />
+              ) : (
+                <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="60" cy="60" r="50" fill="#F3F4F6" />
+                  <circle cx="60" cy="60" r="30" fill="#60A5FA" />
+                  <circle cx="60" cy="60" r="15" fill="#2563EB" />
+                  <circle cx="60" cy="60" r="6" fill="#fff" />
+                  <circle cx="90" cy="35" r="5" fill="#EF4444" />
+                </svg>
+              )}
+            </div>
             <button
-              className="px-6 py-3 rounded-xl bg-blue-600 text-white font-bold shadow-lg hover:bg-blue-700 transition-colors text-lg mb-6"
-              onClick={() => setWebcamEnabled(true)}
+              className="mb-4 px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold shadow"
+              onClick={handleRecordAnswer}
             >
-              Enable Microphone & Webcam
+              {isRecording ? 'Stop Recording' : 'Record Answer'}
             </button>
-          ) : (
-            <>
-              <Webcam
-                audio={true}
-                ref={webcamRef}
-                className="rounded-xl shadow-lg w-full max-w-md aspect-video mb-4"
-              />
-              <button className="px-6 py-2 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 transition-colors shadow mb-2">
-                Record Answer
-              </button>
-              <button className="px-6 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors shadow">
-                Submit Answer
-              </button>
-            </>
-          )}
+            <button
+              className="mb-2 px-4 py-2 rounded bg-blue-600 text-white font-semibold shadow"
+              onClick={handleShowAnswer}
+              disabled={results.length === 0 && !interimResult}
+            >
+              Show Answer
+            </button>
+            {isRecording && (
+              <ul className="w-full max-w-lg bg-white rounded p-4 mt-2 shadow">
+                {results.filter((result) => typeof result === 'object' && 'transcript' in result && 'timestamp' in result).map((result: any) => (
+                  <li key={result.timestamp} className="text-gray-800">{result.transcript}</li>
+                ))}
+                {interimResult && <li className="text-gray-500">{interimResult}</li>}
+              </ul>
+            )}
+            {speechError && <p className="text-red-500">Web Speech API is not available in this browser 🤷‍</p>}
+          </div>
         </div>
       </div>
     </div>
