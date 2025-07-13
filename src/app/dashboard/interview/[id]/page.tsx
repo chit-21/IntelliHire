@@ -71,20 +71,21 @@ export default function InterviewPage({ params }: { params: { id: string } }) {
   };
 
   const handleShowAnswer = () => {
-    const fullTranscript = [
-      ...results.filter((result) => typeof result === 'object' && 'transcript' in result).map((result: any) => result.transcript),
-      interimResult || ''
-    ].join(' ').trim();
+    const fullTranscript = results
+      .filter((result) => typeof result === 'object' && 'transcript' in result)
+      .map((result: any) => result.transcript)
+      .join(' ')
+      .trim();
     setCurrentTranscript(fullTranscript);
   };
 
-  const saveAnswer = async (questionIndex: number, question: string, answer: string) => {
-    const ref = doc(db, "interviews", id, "answers", String(questionIndex));
-    await setDoc(ref, {
-      question,
-      answer,
-      timestamp: new Date().toISOString()
-    });
+  const clearRecording = () => {
+    setCurrentTranscript('');
+    if (isRecording) {
+      stopSpeechToText();
+    }
+    // @ts-ignore - Clear results array
+    results.length = 0;
   };
 
   const handleSubmitAnswer = async () => {
@@ -101,22 +102,17 @@ export default function InterviewPage({ params }: { params: { id: string } }) {
       // Save answer to subcollection
       await saveAnswer(currentQ, currentQuestion, currentTranscript);
 
-      // Update local state
-      setAnswers((prev) => {
-        const updated = [...prev];
-        updated[currentQ] = currentTranscript;
-        return updated;
-      });
-
-      // Clear transcript
-      setCurrentTranscript('');
+      // Clear recording and transcript
+      clearRecording();
       
       // If last question, update interview status
       if (currentQ === questions.length - 1) {
+        // Update interview status
         await updateDoc(doc(db, 'interviews', id), {
           status: 'Completed',
           completedAt: new Date().toISOString()
         });
+
         alert('Interview completed successfully! Redirecting to dashboard...');
         router.push('/dashboard');
       } else {
@@ -129,6 +125,15 @@ export default function InterviewPage({ params }: { params: { id: string } }) {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const saveAnswer = async (questionIndex: number, question: string, answer: string) => {
+    const ref = doc(db, "interviews", id, "answers", String(questionIndex));
+    await setDoc(ref, {
+      question,
+      answer,
+      timestamp: new Date().toISOString()
+    });
   };
 
   if (loading) {

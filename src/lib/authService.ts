@@ -6,11 +6,11 @@ import {
   signInWithPopup 
 } from 'firebase/auth';
 
-export const signUpWithEmail = (email, password) => {
+export const signUpWithEmail = (email: string, password: string) => {
   return createUserWithEmailAndPassword(auth, email, password);
 };
 
-export const signInWithEmail = (email, password) => {
+export const signInWithEmail = (email: string, password: string) => {
   return signInWithEmailAndPassword(auth, email, password);
 };
 

@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { signOut } from '@/lib/authService';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, orderBy, addDoc, Timestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, addDoc, Timestamp, doc, getDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 
 // Interview type definition
@@ -42,8 +42,6 @@ export default function DashboardPage() {
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
-  const [selectedFeedback, setSelectedFeedback] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -213,16 +211,9 @@ export default function DashboardPage() {
                       </div>
                       <button
                         className="mt-4 px-4 py-2 rounded bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors"
-                        onClick={() => {
-                          if (interview.status === 'Completed' && interview.feedback) {
-                            setSelectedFeedback(interview.feedback);
-                            setShowFeedbackModal(true);
-                          } else {
-                            router.push(`/dashboard/interview/${interview.id}`);
-                          }
-                        }}
+                        onClick={() => router.push(`/dashboard/interview/${interview.id}`)}
                       >
-                        {interview.status === 'Completed' ? 'View Feedback' : 'Take Interview'}
+                        Take Interview
                       </button>
                     </div>
                   ))}
@@ -335,23 +326,7 @@ export default function DashboardPage() {
             </div>
           </div>
         )}
-        {/* Feedback Modal */}
-        {showFeedbackModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-            <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-lg relative animate-fadeIn">
-              <button
-                className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl font-bold"
-                onClick={() => setShowFeedbackModal(false)}
-                aria-label="Close"
-              >
-                &times;
-              </button>
-              <h2 className="text-2xl font-bold text-blue-700 mb-4">Interview Feedback & Analysis</h2>
-              <div className="whitespace-pre-line text-gray-800">{selectedFeedback}</div>
-            </div>
-          </div>
-        )}
       </div>
     </ProtectedRoute>
   );
-} 
+}
