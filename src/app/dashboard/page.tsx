@@ -42,6 +42,9 @@ export default function DashboardPage() {
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [selectedFeedback, setSelectedFeedback] = useState<any>(null);
+  const [feedbackLoading, setFeedbackLoading] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -157,6 +160,25 @@ export default function DashboardPage() {
     }
   };
 
+  const fetchFeedback = async (interviewId: string) => {
+    setFeedbackLoading(true);
+    try {
+      const feedbackRef = doc(db, 'interviews', interviewId, 'feedback', 'analysis');
+      const feedbackSnap = await getDoc(feedbackRef);
+      if (feedbackSnap.exists()) {
+        setSelectedFeedback(feedbackSnap.data());
+        setShowFeedbackModal(true);
+      } else {
+        alert('Feedback is not available for this interview yet. Please complete the interview or try again later.');
+      }
+    } catch (error) {
+      console.error('Error fetching feedback:', error);
+      alert('Failed to load feedback');
+    } finally {
+      setFeedbackLoading(false);
+    }
+  };
+
   return (
     <ProtectedRoute>
       <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-blue-50 to-blue-100 py-12">
@@ -207,14 +229,34 @@ export default function DashboardPage() {
                       </div>
                       <div className="flex justify-between items-center mt-2">
                         <span className="text-xs text-gray-500">Status: {interview.status || 'Pending'}</span>
-                        <span className="text-xs text-gray-500">Score: {interview.score ?? 'N/A'}</span>
+                        <span className="text-xs text-gray-500">Score: {interview.score ? `${interview.score}%` : 'N/A'}</span>
                       </div>
-                      <button
-                        className="mt-4 px-4 py-2 rounded bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors"
-                        onClick={() => router.push(`/dashboard/interview/${interview.id}`)}
-                      >
-                        Take Interview
-                      </button>
+                      <div className="flex gap-2 mt-4">
+                        {interview.status === 'Completed' ? (
+                          <>
+                            <button
+                              className="flex-1 px-3 py-2 rounded bg-green-600 text-white text-sm font-semibold hover:bg-green-700 transition-colors"
+                              onClick={() => fetchFeedback(interview.id)}
+                              disabled={feedbackLoading}
+                            >
+                              {feedbackLoading ? 'Loading...' : 'View Feedback'}
+                            </button>
+                            <button
+                              className="flex-1 px-3 py-2 rounded bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors"
+                              onClick={() => router.push(`/dashboard/interview/${interview.id}`)}
+                            >
+                              Take Again
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            className="w-full px-4 py-2 rounded bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors"
+                            onClick={() => router.push(`/dashboard/interview/${interview.id}`)}
+                          >
+                            Take Interview
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -323,6 +365,85 @@ export default function DashboardPage() {
                   {submitting ? 'Creating...' : 'Create Interview'}
                 </button>
               </form>
+            </div>
+          </div>
+        )}
+        {/* Feedback Modal */}
+        {showFeedbackModal && selectedFeedback && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 overflow-y-auto py-8">
+            <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-4xl relative animate-fadeIn m-4">
+              <button
+                className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl font-bold"
+                onClick={() => {
+                  setShowFeedbackModal(false);
+                  setSelectedFeedback(null);
+                }}
+                aria-label="Close"
+              >
+                &times;
+              </button>
+              <h2 className="text-2xl font-bold text-blue-700 mb-6">Interview Feedback & Analysis</h2>
+              
+              {/* Overall Score */}
+              <div className="bg-blue-50 p-6 rounded-lg mb-6">
+                <h3 className="text-xl font-semibold text-blue-800 mb-2">Overall Performance</h3>
+                <div className="flex items-center gap-4">
+                  <div className="text-3xl font-bold text-blue-600">{selectedFeedback.overallScore}%</div>
+                  <div className="flex-1">
+                    <div className="w-full bg-gray-200 rounded-full h-3">
+                      <div 
+                        className="bg-blue-600 h-3 rounded-full transition-all duration-500" 
+                        style={{ width: `${selectedFeedback.overallScore}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Question-by-Question Feedback */}
+              <div className="space-y-6 max-h-96 overflow-y-auto">
+                {selectedFeedback.questionFeedback?.map((qf: any, index: number) => (
+                  <div key={index} className="border border-gray-200 rounded-lg p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="text-lg font-semibold text-gray-800">Question {index + 1}</h4>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-600">Score:</span>
+                        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm font-semibold">
+                          {qf.score}%
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <h5 className="font-medium text-gray-700 mb-2">Question:</h5>
+                        <p className="text-gray-800 bg-gray-50 p-3 rounded">{qf.question}</p>
+                      </div>
+                      
+                      <div>
+                        <h5 className="font-medium text-gray-700 mb-2">Your Answer:</h5>
+                        <p className="text-gray-800 bg-blue-50 p-3 rounded">{qf.answer}</p>
+                      </div>
+                      
+                      <div>
+                        <h5 className="font-medium text-green-700 mb-2">Better Answer:</h5>
+                        <p className="text-gray-800 bg-green-50 p-3 rounded border-l-4 border-green-500">{qf.betterAnswer}</p>
+                      </div>
+                      
+                      <div>
+                        <h5 className="font-medium text-blue-700 mb-2">Feedback:</h5>
+                        <p className="text-gray-700 bg-blue-50 p-3 rounded">{qf.feedback}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Overall Feedback */}
+              <div className="mt-6 bg-gray-50 p-6 rounded-lg">
+                <h3 className="font-semibold text-gray-800 mb-3">Overall Feedback:</h3>
+                <p className="text-gray-700 whitespace-pre-line">{selectedFeedback.overallFeedback}</p>
+              </div>
             </div>
           </div>
         )}

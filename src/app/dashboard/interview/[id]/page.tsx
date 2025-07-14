@@ -105,16 +105,38 @@ export default function InterviewPage({ params }: { params: { id: string } }) {
       // Clear recording and transcript
       clearRecording();
       
-      // If last question, update interview status
+      // If last question, generate feedback and update interview status
       if (currentQ === questions.length - 1) {
-        // Update interview status
-        await updateDoc(doc(db, 'interviews', id), {
-          status: 'Completed',
-          completedAt: new Date().toISOString()
-        });
-
-        alert('Interview completed successfully! Redirecting to dashboard...');
-        router.push('/dashboard');
+        // Fetch all answers for feedback generation
+        const answersData = await fetchAllAnswers();
+        // Check for empty answers
+        if (answersData.some(ans => !ans.trim())) {
+          alert('Please answer all questions before submitting the interview.');
+          setSubmitting(false);
+          return;
+        }
+        // Generate feedback using Gemini API
+        try {
+          const feedbackData = await generateFeedback(questions, answersData);
+          // Save feedback to subcollection
+          await saveFeedback(feedbackData);
+          // Update interview status with score
+          await updateDoc(doc(db, 'interviews', id), {
+            status: 'Completed',
+            completedAt: new Date().toISOString(),
+            score: feedbackData.overallScore
+          });
+          alert('Interview completed successfully! Redirecting to dashboard...');
+          router.push('/dashboard');
+        } catch (err) {
+          if (err instanceof Error) {
+            alert('Failed to generate feedback: ' + err.message);
+          } else {
+            alert('Failed to generate feedback.');
+          }
+          setSubmitting(false);
+          return;
+        }
       } else {
         // Move to next question
         setCurrentQ((q) => Math.min(q + 1, questions.length - 1));
@@ -132,6 +154,47 @@ export default function InterviewPage({ params }: { params: { id: string } }) {
     await setDoc(ref, {
       question,
       answer,
+      timestamp: new Date().toISOString()
+    });
+  };
+
+  const fetchAllAnswers = async () => {
+    const answers: string[] = [];
+    for (let i = 0; i < questions.length; i++) {
+      const answerRef = doc(db, "interviews", id, "answers", String(i));
+      const answerSnap = await getDoc(answerRef);
+      if (answerSnap.exists()) {
+        answers.push(answerSnap.data().answer);
+      } else {
+        answers.push(''); // Fallback for missing answers
+      }
+    }
+    return answers;
+  };
+
+  const generateFeedback = async (questions: string[], answers: string[]) => {
+    const response = await fetch('/api/gemini/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        questions,
+        answers,
+        role: interview.role,
+        type: interview.type
+      }),
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to generate feedback');
+    }
+    
+    return await response.json();
+  };
+
+  const saveFeedback = async (feedbackData: any) => {
+    const feedbackRef = doc(db, "interviews", id, "feedback", "analysis");
+    await setDoc(feedbackRef, {
+      ...feedbackData,
       timestamp: new Date().toISOString()
     });
   };
