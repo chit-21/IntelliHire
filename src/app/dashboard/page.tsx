@@ -370,13 +370,24 @@ export default function DashboardPage() {
         )}
         {/* Feedback Modal */}
         {showFeedbackModal && selectedFeedback && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 overflow-y-auto py-8">
-            <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-4xl relative animate-fadeIn m-4">
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/10"
+            onClick={() => {
+              setShowFeedbackModal(false);
+              setSelectedFeedback(null);
+              router.push('/dashboard');
+            }}
+          >
+            <div
+              className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-xl mx-4 max-h-[90vh] overflow-y-auto relative animate-fadeIn"
+              onClick={e => e.stopPropagation()}
+            >
               <button
                 className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl font-bold"
                 onClick={() => {
                   setShowFeedbackModal(false);
                   setSelectedFeedback(null);
+                  router.push('/dashboard');
                 }}
                 aria-label="Close"
               >
@@ -401,7 +412,7 @@ export default function DashboardPage() {
               </div>
 
               {/* Question-by-Question Feedback */}
-              <div className="space-y-6 max-h-96 overflow-y-auto">
+              <div className="space-y-6">
                 {selectedFeedback.questionFeedback?.map((qf: any, index: number) => (
                   <div key={index} className="border border-gray-200 rounded-lg p-6">
                     <div className="flex items-center justify-between mb-4">
@@ -443,6 +454,19 @@ export default function DashboardPage() {
               <div className="mt-6 bg-gray-50 p-6 rounded-lg">
                 <h3 className="font-semibold text-gray-800 mb-3">Overall Feedback:</h3>
                 <p className="text-gray-700 whitespace-pre-line">{selectedFeedback.overallFeedback}</p>
+              </div>
+              <div className="flex justify-end mt-4">
+                <button
+                  className="px-4 py-2 rounded bg-gray-200 text-gray-700 font-semibold shadow hover:bg-gray-300 transition-colors text-sm"
+                  onClick={() => {
+                    setShowFeedbackModal(false);
+                    setSelectedFeedback(null);
+                    router.push('/dashboard');
+                  }}
+                  aria-label="Close Feedback Modal"
+                >
+                  Close
+                </button>
               </div>
             </div>
           </div>
