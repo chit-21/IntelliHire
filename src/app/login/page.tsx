@@ -2,6 +2,8 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signInWithEmail, signInWithGoogle } from '@/lib/authService';
+import { toast } from 'react-hot-toast';
+import { motion } from "framer-motion";
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -9,6 +11,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
   const handleAuthAction = async (action: () => Promise<any>) => {
@@ -17,8 +20,10 @@ export default function LoginPage() {
     try {
       await action();
       router.push('/dashboard');
+      toast.success('Signed in successfully!');
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred.');
+      toast.error(err.message || 'An unexpected error occurred.');
     } finally {
       setLoading(false);
     }
@@ -35,7 +40,12 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-green-50">
-      <div className="w-full max-w-5xl bg-white rounded-3xl shadow-2xl flex overflow-hidden">
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="w-full max-w-5xl bg-white rounded-3xl shadow-2xl flex overflow-hidden"
+      >
         {/* Left Side */}
         <div className="hidden md:flex flex-col justify-between items-center w-1/2 p-10" style={{ backgroundColor: '#D4EEDA' }}>
           <div className="w-full">
@@ -60,7 +70,6 @@ export default function LoginPage() {
           </div>
           <div className="w-full flex justify-between items-end">
             <div className="w-10"></div>
-           
           </div>
         </div>
         {/* Right Side */}
@@ -85,20 +94,37 @@ export default function LoginPage() {
               </div>
               <div>
                 <label className="block text-gray-700 text-sm mb-1">Password</label>
-                <input
-                  type="password"
-                  placeholder="Enter your password"
-                  className="w-full px-4 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-green-300 bg-green-50 text-gray-900 font-mono placeholder-gray-400"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  required
-                  disabled={loading}
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Enter your password"
+                    className="w-full px-4 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-green-300 bg-green-50 text-gray-900 font-mono placeholder-gray-400 pr-10"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    required
+                    disabled={loading}
+                  />
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 focus:outline-none"
+                    onClick={() => setShowPassword(v => !v)}
+                  >
+                    {showPassword ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 2.25 12c2.036 3.952 6.1 6.75 9.75 6.75 1.563 0 3.06-.362 4.396-1.02M21.75 12c-.512-1.003-1.246-2.053-2.193-3.032m-3.07-2.58A6.75 6.75 0 0 0 12 5.25c-2.25 0-4.5 1.5-6.75 4.5.726 1.41 1.726 2.75 2.98 3.777m3.77 2.98c.726.726 1.726 1.726 2.98 3.777C19.5 16.5 21.75 15 21.75 12c-2.036-3.952-6.1-6.75-9.75-6.75-1.563 0-3.06.362-4.396 1.02" />
+                      </svg>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6.75 0c0 1.25-.5 2.5-1.5 3.5-2.25 2.25-6.25 2.25-8.5 0-1-1-1.5-2.25-1.5-3.5s.5-2.5 1.5-3.5c2.25-2.25 6.25-2.25 8.5 0 1 1 1.5 2.25 1.5 3.5Z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
               </div>
               <div className="flex items-center justify-between text-xs">
                 <div></div>
               </div>
-              {error && <p className="w-full text-center bg-red-100 text-red-700 p-2 rounded-lg text-xs mb-2">{error}</p>}
               <button
                 type="submit"
                 disabled={loading}
@@ -127,7 +153,7 @@ export default function LoginPage() {
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 } 

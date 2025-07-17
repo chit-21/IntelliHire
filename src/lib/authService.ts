@@ -16,6 +16,7 @@ export const signInWithEmail = (email: string, password: string) => {
 
 export const signInWithGoogle = () => {
   const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: 'select_account' });
   return signInWithPopup(auth, provider);
 };
 
