@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, orderBy, addDoc, Timestamp, doc, getDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
+import { FiSearch, FiUser } from 'react-icons/fi';
+import Image from 'next/image';
 
 // Interview type definition
 interface Interview {
@@ -45,6 +47,7 @@ export default function DashboardPage() {
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [selectedFeedback, setSelectedFeedback] = useState<any>(null);
   const [feedbackLoading, setFeedbackLoading] = useState(false);
+  const [formattedDates, setFormattedDates] = useState<string[]>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -67,6 +70,18 @@ export default function DashboardPage() {
     };
     fetchInterviews();
   }, [user]);
+
+  useEffect(() => {
+    if (interviews.length > 0) {
+      setFormattedDates(
+        interviews.map(i =>
+          i.createdAt?.toDate ? i.createdAt.toDate().toLocaleString() : 'N/A'
+        )
+      );
+    } else {
+      setFormattedDates([]);
+    }
+  }, [interviews]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -181,89 +196,93 @@ export default function DashboardPage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-blue-50 to-blue-100 py-12">
-        <div className="w-full max-w-4xl mx-auto">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
-            <div>
-              <h1 className="text-4xl font-extrabold text-blue-800 mb-2">Dashboard</h1>
-              <p className="text-lg text-gray-600">Welcome, <span className="font-semibold text-blue-700">{user?.email}</span></p>
-            </div>
+      <div className="min-h-screen bg-green-50 flex flex-col">
+        {/* Header with Robot Hero */}
+        <header className="w-full flex flex-col md:flex-row items-center justify-between px-6 py-8 bg-green-100 rounded-b-3xl shadow-md mb-8">
+          <div className="flex-1 flex flex-col gap-2">
+            <h1 className="text-4xl font-extrabold text-green-800 mb-2">Dashboard</h1>
+            <p className="text-lg text-green-700">Welcome, <span className="font-semibold">{user?.email}</span></p>
             <button
               onClick={() => setShowModal(true)}
-              className="px-6 py-3 rounded-xl bg-blue-600 text-white font-bold shadow-lg hover:bg-blue-700 transition-colors text-lg flex items-center gap-2"
+              className="mt-4 w-fit px-6 py-3 rounded-xl bg-green-700 text-white font-bold shadow hover:bg-green-800 transition-colors text-lg flex items-center gap-2"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-              </svg>
-              Create Interview
+              + Create Interview
             </button>
           </div>
-          <div className="bg-white rounded-2xl shadow-xl p-8">
-            <div className="flex justify-end mb-4">
-              <button
-                onClick={handleSignOut}
-                className="px-4 py-2 rounded-lg bg-red-500 text-white font-semibold hover:bg-red-600 transition-colors shadow"
-              >
-                Sign Out
-              </button>
-            </div>
-            <div className="w-full">
-              {loading ? (
-                <div className="text-center text-blue-500 py-12 text-xl font-semibold">Loading interviews...</div>
-              ) : interviews.length === 0 ? (
-                <div className="text-center text-gray-400 py-12 text-lg">No interviews found. Click 'Create Interview' to get started!</div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {interviews.map((interview) => (
-                    <div key={interview.id} className="bg-blue-50 border border-blue-100 rounded-xl p-6 shadow flex flex-col gap-2 hover:shadow-lg transition-shadow">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-2xl font-bold text-blue-700">{interview.role || 'Role not set'}</span>
-                        <span className="ml-auto px-3 py-1 rounded-full text-xs font-semibold bg-blue-200 text-blue-800">{interview.type || 'N/A'}</span>
-                      </div>
-                      <div className="text-sm text-gray-600 mb-1">Created: {interview.createdAt?.toDate ? interview.createdAt.toDate().toLocaleString() : 'N/A'}</div>
-                      <div className="flex flex-wrap gap-2 mb-1">
-                        {/* Tech stack icons will be added later */}
-                        {interview.techStack && interview.techStack.length > 0 && interview.techStack.map((tech: string, idx: number) => (
-                          <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">{tech}</span>
-                        ))}
-                      </div>
-                      <div className="flex justify-between items-center mt-2">
-                        <span className="text-xs text-gray-500">Status: {interview.status || 'Pending'}</span>
-                        <span className="text-xs text-gray-500">Score: {interview.score ? `${interview.score}%` : 'N/A'}</span>
-                      </div>
-                      <div className="flex gap-2 mt-4">
-                        {interview.status === 'Completed' ? (
-                          <>
-                            <button
-                              className="flex-1 px-3 py-2 rounded bg-green-600 text-white text-sm font-semibold hover:bg-green-700 transition-colors"
-                              onClick={() => fetchFeedback(interview.id)}
-                              disabled={feedbackLoading}
-                            >
-                              {feedbackLoading ? 'Loading...' : 'View Feedback'}
-                            </button>
-                            <button
-                              className="flex-1 px-3 py-2 rounded bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors"
-                              onClick={() => router.push(`/dashboard/interview/${interview.id}`)}
-                            >
-                              Take Again
-                            </button>
-                          </>
-                        ) : (
-                          <button
-                            className="w-full px-4 py-2 rounded bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors"
-                            onClick={() => router.push(`/dashboard/interview/${interview.id}`)}
-                          >
-                            Take Interview
-                          </button>
-                        )}
-                      </div>
-                    </div>
+          <div className="flex-1 flex justify-center md:justify-end mt-8 md:mt-0">
+            <Image src="/robo.png" alt="Robot Hero" width={300} height={240} className="object-contain drop-shadow-xl" />
+          </div>
+        </header>
+        {/* Dashboard Content */}
+        <main className="flex-1 px-4 md:px-12 py-4">
+          <h2 className="text-2xl font-bold text-green-800 mb-6">Your Post Interviews</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+            {/* Interview Cards */}
+            {interviews.map((interview, idx) => (
+              <div key={interview.id} className="bg-white rounded-2xl p-6 flex flex-col gap-4 shadow hover:shadow-lg border border-green-100">
+                <div className="flex items-center gap-2 mb-2">
+                  <h3 className="text-xl font-bold text-green-800">{interview.role || 'Role not set'}</h3>
+                  <span className="ml-auto px-3 py-1 rounded-full text-xs font-semibold bg-green-50 text-green-700 border border-green-200">{interview.type || 'N/A'}</span>
+                </div>
+                <div className="text-green-600 text-sm">Created: {formattedDates[idx] || 'N/A'}</div>
+                <div className="flex flex-wrap gap-2 mb-1">
+                  {interview.techStack && interview.techStack.length > 0 && interview.techStack.map((tech: string, tIdx: number) => (
+                    <span key={tIdx} className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">{tech}</span>
                   ))}
                 </div>
-              )}
-            </div>
+                <div className="text-green-600 text-sm">Status: {interview.status || 'Pending'}</div>
+                <div className="text-green-600 text-sm">{interview.score !== null ? `${interview.score}%` : ''}</div>
+                <div className="flex gap-2 mt-2">
+                  {interview.status === 'Completed' ? (
+                    <>
+                      <button
+                        className="flex-1 px-3 py-2 rounded bg-green-700 text-white text-sm font-semibold hover:bg-green-800 transition-colors"
+                        onClick={() => fetchFeedback(interview.id)}
+                        disabled={feedbackLoading}
+                      >
+                        {feedbackLoading ? 'Loading...' : 'View Feedback'}
+                      </button>
+                      <button
+                        className="flex-1 px-3 py-2 rounded bg-green-100 text-green-700 text-sm font-semibold hover:bg-green-200 transition-colors border border-green-300"
+                        onClick={() => router.push(`/dashboard/interview/${interview.id}`)}
+                      >
+                        Take Again
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      className="w-full px-4 py-2 rounded bg-green-700 text-white text-sm font-semibold hover:bg-green-800 transition-colors"
+                      onClick={() => router.push(`/dashboard/interview/${interview.id}`)}
+                    >
+                      Take Interview
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
-        </div>
+          {/* Pick Your Interview Section */}
+          <h2 className="text-2xl font-bold text-green-800 mb-6">Pick Your Interview</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* Example static cards for picking interview types */}
+            <div className="bg-white rounded-2xl p-6 flex flex-col gap-4 shadow hover:shadow-lg border border-green-100">
+              <h3 className="text-xl font-bold text-green-800">Full-Stack Dev Interview</h3>
+              <p className="text-green-600 text-sm">This interview covers both frontend and backend topics.</p>
+              <button className="mt-2 px-4 py-2 rounded bg-green-700 text-white text-sm font-semibold hover:bg-green-800 transition-colors">Take Interview</button>
+            </div>
+            <div className="bg-white rounded-2xl p-6 flex flex-col gap-4 shadow hover:shadow-lg border border-green-100">
+              <h3 className="text-xl font-bold text-green-800">DevOps & Cloud Interview</h3>
+              <p className="text-green-600 text-sm">Covers cloud, CI/CD, and infrastructure topics.</p>
+              <button className="mt-2 px-4 py-2 rounded bg-green-700 text-white text-sm font-semibold hover:bg-green-800 transition-colors">Take Interview</button>
+            </div>
+            <div className="bg-white rounded-2xl p-6 flex flex-col gap-4 shadow hover:shadow-lg border border-green-100">
+              <h3 className="text-xl font-bold text-green-800">HR Screening Interview</h3>
+              <p className="text-green-600 text-sm">Covers behavioral and HR screening questions.</p>
+              <button className="mt-2 px-4 py-2 rounded bg-green-700 text-white text-sm font-semibold hover:bg-green-800 transition-colors">Take Interview</button>
+            </div>
+            {/* Add more cards as needed */}
+          </div>
+        </main>
         {/* Modal for Create Interview */}
         {showModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
@@ -275,7 +294,7 @@ export default function DashboardPage() {
               >
                 &times;
               </button>
-              <h2 className="text-2xl font-bold text-blue-700 mb-4">Create New Interview</h2>
+              <h2 className="text-2xl font-bold text-green-700 mb-4">Create New Interview</h2>
               <form onSubmit={handleFormSubmit} className="space-y-5">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Interview Type</label>
@@ -283,7 +302,7 @@ export default function DashboardPage() {
                     name="type"
                     value={form.type}
                     onChange={handleFormChange}
-                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-300"
                   >
                     <option value="">Select type</option>
                     <option value="Technical">Technical</option>
@@ -299,7 +318,7 @@ export default function DashboardPage() {
                     name="role"
                     value={form.role}
                     onChange={handleFormChange}
-                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-300"
                     placeholder="e.g. Frontend Developer"
                   />
                   {formErrors.role && <div className="text-red-500 text-xs mt-1">{formErrors.role}</div>}
@@ -311,7 +330,7 @@ export default function DashboardPage() {
                       name="years"
                       value={form.years}
                       onChange={handleFormChange}
-                      className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                      className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-300"
                     >
                       <option value="">Select</option>
                       <option value="0-1">0-1</option>
@@ -327,7 +346,7 @@ export default function DashboardPage() {
                       name="numQuestions"
                       value={form.numQuestions}
                       onChange={handleFormChange}
-                      className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                      className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-300"
                     >
                       <option value="">Select</option>
                       <option value="3">3</option>
@@ -341,14 +360,14 @@ export default function DashboardPage() {
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Tech Stack</label>
                   <div className="flex flex-wrap gap-2">
                     {TECH_STACK_OPTIONS.map((tech) => (
-                      <label key={tech} className="flex items-center gap-1 bg-blue-50 px-3 py-1 rounded-lg cursor-pointer text-blue-700 text-xs font-medium">
+                      <label key={tech} className="flex items-center gap-1 bg-green-50 px-3 py-1 rounded-lg cursor-pointer text-green-700 text-xs font-medium">
                         <input
                           type="checkbox"
                           name="techStack"
                           value={tech}
                           checked={form.techStack.includes(tech)}
                           onChange={handleFormChange}
-                          className="accent-blue-600"
+                          className="accent-green-600"
                         />
                         {tech}
                       </label>
@@ -359,7 +378,7 @@ export default function DashboardPage() {
                 {submitError && <div className="text-red-500 text-center text-sm mb-2">{submitError}</div>}
                 <button
                   type="submit"
-                  className="w-full py-3 rounded-xl bg-blue-600 text-white font-bold shadow-lg hover:bg-blue-700 transition-colors text-lg mt-2 disabled:opacity-60"
+                  className="w-full py-3 rounded-xl bg-green-600 text-white font-bold shadow-lg hover:bg-green-700 transition-colors text-lg mt-2 disabled:opacity-60"
                   disabled={submitting}
                 >
                   {submitting ? 'Creating...' : 'Create Interview'}
@@ -393,17 +412,17 @@ export default function DashboardPage() {
               >
                 &times;
               </button>
-              <h2 className="text-2xl font-bold text-blue-700 mb-6">Interview Feedback & Analysis</h2>
+              <h2 className="text-2xl font-bold text-green-700 mb-6">Interview Feedback & Analysis</h2>
               
               {/* Overall Score */}
-              <div className="bg-blue-50 p-6 rounded-lg mb-6">
-                <h3 className="text-xl font-semibold text-blue-800 mb-2">Overall Performance</h3>
+              <div className="bg-green-50 p-6 rounded-lg mb-6">
+                <h3 className="text-xl font-semibold text-green-800 mb-2">Overall Performance</h3>
                 <div className="flex items-center gap-4">
-                  <div className="text-3xl font-bold text-blue-600">{selectedFeedback.overallScore}%</div>
+                  <div className="text-3xl font-bold text-green-600">{selectedFeedback.overallScore}%</div>
                   <div className="flex-1">
                     <div className="w-full bg-gray-200 rounded-full h-3">
                       <div 
-                        className="bg-blue-600 h-3 rounded-full transition-all duration-500" 
+                        className="bg-green-600 h-3 rounded-full transition-all duration-500" 
                         style={{ width: `${selectedFeedback.overallScore}%` }}
                       ></div>
                     </div>
@@ -419,7 +438,7 @@ export default function DashboardPage() {
                       <h4 className="text-lg font-semibold text-gray-800">Question {index + 1}</h4>
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-gray-600">Score:</span>
-                        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm font-semibold">
+                        <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-sm font-semibold">
                           {qf.score}%
                         </span>
                       </div>
@@ -433,7 +452,7 @@ export default function DashboardPage() {
                       
                       <div>
                         <h5 className="font-medium text-gray-700 mb-2">Your Answer:</h5>
-                        <p className="text-gray-800 bg-blue-50 p-3 rounded">{qf.answer}</p>
+                        <p className="text-gray-800 bg-green-50 p-3 rounded">{qf.answer}</p>
                       </div>
                       
                       <div>
@@ -442,8 +461,8 @@ export default function DashboardPage() {
                       </div>
                       
                       <div>
-                        <h5 className="font-medium text-blue-700 mb-2">Feedback:</h5>
-                        <p className="text-gray-700 bg-blue-50 p-3 rounded">{qf.feedback}</p>
+                        <h5 className="font-medium text-green-700 mb-2">Feedback:</h5>
+                        <p className="text-gray-700 bg-green-50 p-3 rounded">{qf.feedback}</p>
                       </div>
                     </div>
                   </div>
