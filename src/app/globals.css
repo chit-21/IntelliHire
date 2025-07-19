@@ -1,13 +1,19 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --color-bg: #ffffff;
-  --color-bg-light: #F0FDF4;
-  --color-bg-accent: #E6F4EA;
-  --color-bg-left: #D4EEDA;
-  --color-green: #22C55E;
+  /* Light, Tailwind-like green palette using HSL */
+  --background: hsl(120, 60%, 97%); /* green-50 */
+  --foreground: hsl(120, 25%, 15%);
+  --color-bg: hsl(120, 60%, 97%); /* green-50 */
+  --color-bg-light: hsl(120, 52%, 94%); /* green-100 */
+  --color-bg-accent: hsl(120, 40%, 90%); /* custom accent */
+  --color-bg-left: hsl(120, 40%, 85%); /* custom accent */
+  --color-green: hsl(142, 71%, 45%); /* Tailwind green-500 */
+  --color-green-dark: hsl(142, 71%, 29%); /* Tailwind green-700 */
+  --color-green-light: hsl(120, 60%, 97%); /* green-50 */
+  --color-card: #fff;
+  --color-card-foreground: hsl(120, 25%, 15%);
+  --color-border: hsl(120, 40%, 75%);
 }
 
 @theme inline {
@@ -15,13 +21,6 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {

@@ -8,6 +8,10 @@ import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, orderBy, addDoc, Timestamp, doc, getDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { FiSearch, FiUser } from 'react-icons/fi';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
+import { Progress } from '@/components/ui/Progress';
 import Image from 'next/image';
 
 // Interview type definition
@@ -26,6 +30,111 @@ interface Interview {
 const TECH_STACK_OPTIONS = [
   'React', 'Node.js', 'Python', 'Java', 'C++', 'TypeScript', 'SQL', 'AWS', 'Docker', 'Other'
 ];
+
+// Hero Section
+function HeroSection({ userEmail, onCreateInterview }: { userEmail?: string; onCreateInterview: () => void }) {
+  return (
+    <div className="relative bg-gradient-primary overflow-hidden">
+      <div className="absolute inset-0 bg-primary/80"></div>
+      <div className="relative container mx-auto px-6 py-16">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <div className="space-y-8">
+            <div className="flex items-center gap-4">
+              <Image src="/logo.png" alt="IntellHire Logo" width={48} height={48} className="w-12 h-12" />
+              <h1 className="text-3xl font-bold text-primary-foreground">IntellHire</h1>
+            </div>
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-5xl font-bold text-primary-foreground mb-4">Dashboard</h2>
+                <p className="text-xl text-primary-foreground/90">Welcome back, {userEmail}</p>
+                <p className="text-lg text-primary-foreground/80 mt-2">Master your interview skills with AI-powered practice sessions</p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Button variant="secondary" size="lg" className="bg-white text-primary hover:bg-white/90 shadow-elegant text-lg px-8 py-4 h-auto" onClick={onCreateInterview}>
+                  + Create Interview
+                </Button>
+              </div>
+            </div>
+          </div>
+          <div className="flex justify-center lg:justify-end">
+            <div className="relative">
+              <div className="absolute inset-0 bg-white/10 rounded-full blur-3xl"></div>
+              <Image src="/robot-mascot.png" alt="AI Interview Assistant" width={320} height={320} className="relative w-80 h-80 object-contain animate-float" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Interview Card
+function InterviewCard({ interview, createdAt, onViewFeedback, onTakeAgain, onTakeInterview, feedbackLoading }: any) {
+  const status = interview.status || 'Pending';
+  const progress = interview.score !== null && interview.score !== undefined ? interview.score : undefined;
+  // Color for status
+  const statusColor = status === 'Completed'
+    ? 'text-green-700'
+    : status === 'Pending'
+      ? 'text-yellow-600'
+      : 'text-blue-700';
+  // Color for tech stack capsules
+  const techStackClass = 'px-3 py-1 bg-green-200 text-green-800 rounded-full text-xs font-semibold';
+  // Button class for dark green
+  const buttonClass = 'bg-green-700 hover:bg-green-800 text-white font-semibold';
+  return (
+    <Card className="bg-green-100 shadow-[0_4px_24px_0_rgba(34,197,94,0.15)] hover:shadow-[0_8px_32px_0_rgba(34,197,94,0.22)] border border-green-200 h-full flex flex-col transition-all duration-300">
+      <CardHeader className="space-y-3 flex-shrink-0">
+        <div className="flex items-start justify-between">
+          <CardTitle className="text-xl text-foreground">{interview.role || 'Role not set'}</CardTitle>
+          <span className="ml-2 px-3 py-1 bg-green-200 text-green-800 rounded-full text-xs font-semibold">{interview.type || 'N/A'}</span>
+        </div>
+        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+          <div className="flex items-center gap-1">
+            <span>Created: {createdAt}</span>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {interview.techStack && interview.techStack.length > 0 && interview.techStack.map((tech: string) => (
+            <span key={tech} className={techStackClass}>{tech}</span>
+          ))}
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4 flex-grow flex flex-col">
+        <div className="space-y-2 flex-grow">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-foreground">Status:</span>
+            <span className={`text-sm font-semibold ${statusColor}`}>{status}</span>
+          </div>
+          <div className="flex items-center justify-between mt-1">
+            <span className="text-sm font-medium text-foreground">Interview Score:</span>
+            <span className="text-sm font-medium text-foreground">{progress !== undefined && progress !== null ? progress : '-'}&#47;100</span>
+          </div>
+        </div>
+        <div className="flex gap-2 pt-4 mt-auto">
+          {status === 'Completed' && (
+            <>
+              <Button variant="default" className={`flex-1 ${buttonClass}`} onClick={onViewFeedback} disabled={feedbackLoading}>{feedbackLoading ? 'Loading...' : 'View Feedback'}</Button>
+              <Button variant="default" className={`flex-1 ${buttonClass}`} onClick={onTakeAgain}>Take Again</Button>
+            </>
+          )}
+          {status === 'Pending' && (
+            <>
+              <Button variant="default" className={`flex-1 ${buttonClass}`} onClick={onTakeInterview}>Take Interview</Button>
+              <Button variant="outline" className="flex-1 opacity-50 cursor-not-allowed" disabled>No Feedback</Button>
+            </>
+          )}
+          {status === 'In Progress' && (
+            <>
+              <Button variant="default" className={`flex-1 ${buttonClass}`} onClick={onTakeInterview}>Continue Interview</Button>
+              <Button variant="outline" className="flex-1 opacity-50 cursor-not-allowed" disabled>No Feedback</Button>
+            </>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -196,93 +305,71 @@ export default function DashboardPage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-green-50 flex flex-col">
-        {/* Header with Robot Hero */}
-        <header className="w-full flex flex-col md:flex-row items-center justify-between px-6 py-8 bg-green-100 rounded-b-3xl shadow-md mb-8">
-          <div className="flex-1 flex flex-col gap-2">
-            <h1 className="text-4xl font-extrabold text-green-800 mb-2">Dashboard</h1>
-            <p className="text-lg text-green-700">Welcome, <span className="font-semibold">{user?.email}</span></p>
-            <button
-              onClick={() => setShowModal(true)}
-              className="mt-4 w-fit px-6 py-3 rounded-xl bg-green-700 text-white font-bold shadow hover:bg-green-800 transition-colors text-lg flex items-center gap-2"
-            >
-              + Create Interview
-            </button>
+      <div className="min-h-screen bg-background flex flex-col">
+        <div className="w-full max-w-7xl mx-auto px-4 flex flex-col">
+          {/* Top-right Sign Out button */}
+          <div className="w-full flex justify-end pt-6">
+            <Button onClick={handleSignOut} className="bg-green-700 hover:bg-green-800 text-white font-semibold px-6 py-2 rounded-lg shadow">
+              Sign Out
+            </Button>
           </div>
-          <div className="flex-1 flex justify-center md:justify-end mt-8 md:mt-0">
-            <Image src="/robo.png" alt="Robot Hero" width={300} height={240} className="object-contain drop-shadow-xl" />
-          </div>
-        </header>
-        {/* Dashboard Content */}
-        <main className="flex-1 px-4 md:px-12 py-4">
-          <h2 className="text-2xl font-bold text-green-800 mb-6">Your Post Interviews</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-            {/* Interview Cards */}
-            {interviews.map((interview, idx) => (
-              <div key={interview.id} className="bg-white rounded-2xl p-6 flex flex-col gap-4 shadow hover:shadow-lg border border-green-100">
-                <div className="flex items-center gap-2 mb-2">
-                  <h3 className="text-xl font-bold text-green-800">{interview.role || 'Role not set'}</h3>
-                  <span className="ml-auto px-3 py-1 rounded-full text-xs font-semibold bg-green-50 text-green-700 border border-green-200">{interview.type || 'N/A'}</span>
+          <HeroSection userEmail={user?.email || ''} onCreateInterview={() => setShowModal(true)} />
+          <main className="flex-1 py-4">
+            <h2 className="text-2xl font-bold text-green-800 mb-6">Your Post Interviews</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+              {interviews.map((interview, idx) => (
+                <InterviewCard
+                  key={interview.id}
+                  interview={interview}
+                  createdAt={formattedDates[idx] || 'N/A'}
+                  onViewFeedback={() => fetchFeedback(interview.id)}
+                  onTakeAgain={() => router.push(`/dashboard/interview/${interview.id}`)}
+                  onTakeInterview={() => router.push(`/dashboard/interview/${interview.id}`)}
+                  feedbackLoading={feedbackLoading}
+                />
+              ))}
+            </div>
+            {/* Featured Section */}
+            <section className="mt-12 mb-16">
+              <h2 className="text-3xl font-extrabold text-center text-green-900 mb-2">Why Choose Our Interview Platform?</h2>
+              <p className="text-center text-gray-600 text-lg mb-10">Leverage cutting-edge AI technology to enhance your interview skills and land your dream job.</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {/* Row 1 */}
+                <div className="bg-white rounded-2xl border border-green-100 p-8 flex flex-col items-center shadow-sm">
+                  <div className="bg-green-700 rounded-full p-3 mb-4"><svg width="32" height="32" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#22C55E"/><path d="M12 7v5l3 3" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg></div>
+                  <h3 className="text-xl font-bold text-green-900 mb-2 text-center">AI-Powered Questions</h3>
+                  <p className="text-gray-600 text-center">Advanced AI generates relevant, role-specific interview questions tailored to your experience level.</p>
                 </div>
-                <div className="text-green-600 text-sm">Created: {formattedDates[idx] || 'N/A'}</div>
-                <div className="flex flex-wrap gap-2 mb-1">
-                  {interview.techStack && interview.techStack.length > 0 && interview.techStack.map((tech: string, tIdx: number) => (
-                    <span key={tIdx} className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">{tech}</span>
-                  ))}
+                <div className="bg-white rounded-2xl border border-green-100 p-8 flex flex-col items-center shadow-sm">
+                  <div className="bg-green-700 rounded-full p-3 mb-4"><svg width="32" height="32" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#22C55E"/><path d="M12 8l4 4-4 4-4-4 4-4z" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg></div>
+                  <h3 className="text-xl font-bold text-green-900 mb-2 text-center">Real-Time Feedback</h3>
+                  <p className="text-gray-600 text-center">Get instant feedback on your responses with detailed analysis and improvement suggestions.</p>
                 </div>
-                <div className="text-green-600 text-sm">Status: {interview.status || 'Pending'}</div>
-                <div className="text-green-600 text-sm">{interview.score !== null ? `${interview.score}%` : ''}</div>
-                <div className="flex gap-2 mt-2">
-                  {interview.status === 'Completed' ? (
-                    <>
-                      <button
-                        className="flex-1 px-3 py-2 rounded bg-green-700 text-white text-sm font-semibold hover:bg-green-800 transition-colors"
-                        onClick={() => fetchFeedback(interview.id)}
-                        disabled={feedbackLoading}
-                      >
-                        {feedbackLoading ? 'Loading...' : 'View Feedback'}
-                      </button>
-                      <button
-                        className="flex-1 px-3 py-2 rounded bg-green-100 text-green-700 text-sm font-semibold hover:bg-green-200 transition-colors border border-green-300"
-                        onClick={() => router.push(`/dashboard/interview/${interview.id}`)}
-                      >
-                        Take Again
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      className="w-full px-4 py-2 rounded bg-green-700 text-white text-sm font-semibold hover:bg-green-800 transition-colors"
-                      onClick={() => router.push(`/dashboard/interview/${interview.id}`)}
-                    >
-                      Take Interview
-                    </button>
-                  )}
+                <div className="bg-white rounded-2xl border border-green-100 p-8 flex flex-col items-center shadow-sm">
+                  <div className="bg-green-700 rounded-full p-3 mb-4"><svg width="32" height="32" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#22C55E"/><path d="M4 17l6-6 4 4 6-6" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg></div>
+                  <h3 className="text-xl font-bold text-green-900 mb-2 text-center">Performance Analytics</h3>
+                  <p className="text-gray-600 text-center">Track your progress over time with comprehensive performance metrics and skill assessments.</p>
+                </div>
+                {/* Row 2 */}
+                <div className="bg-white rounded-2xl border border-green-100 p-8 flex flex-col items-center shadow-sm">
+                  <div className="bg-green-700 rounded-full p-3 mb-4"><svg width="32" height="32" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#22C55E"/><path d="M17 20h5v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2h5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg></div>
+                  <h3 className="text-xl font-bold text-green-900 mb-2 text-center">Multiple Interview Types</h3>
+                  <p className="text-gray-600 text-center">Practice behavioral, technical, and case study interviews across various domains and roles.</p>
+                </div>
+                <div className="bg-white rounded-2xl border border-green-100 p-8 flex flex-col items-center shadow-sm">
+                  <div className="bg-green-700 rounded-full p-3 mb-4"><svg width="32" height="32" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#22C55E"/><path d="M12 17v-6m0 0V7m0 4h4m-4 0H8" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg></div>
+                  <h3 className="text-xl font-bold text-green-900 mb-2 text-center">Secure & Private</h3>
+                  <p className="text-gray-600 text-center">Your interview data is encrypted and stored securely. Complete privacy guaranteed.</p>
+                </div>
+                <div className="bg-white rounded-2xl border border-green-100 p-8 flex flex-col items-center shadow-sm">
+                  <div className="bg-green-700 rounded-full p-3 mb-4"><svg width="32" height="32" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#22C55E"/><path d="M12 8v8m0 0l-3-3m3 3l3-3" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg></div>
+                  <h3 className="text-xl font-bold text-green-900 mb-2 text-center">Quick Setup</h3>
+                  <p className="text-gray-600 text-center">Start practicing immediately with our streamlined interview creation process.</p>
                 </div>
               </div>
-            ))}
-          </div>
-          {/* Pick Your Interview Section */}
-          <h2 className="text-2xl font-bold text-green-800 mb-6">Pick Your Interview</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {/* Example static cards for picking interview types */}
-            <div className="bg-white rounded-2xl p-6 flex flex-col gap-4 shadow hover:shadow-lg border border-green-100">
-              <h3 className="text-xl font-bold text-green-800">Full-Stack Dev Interview</h3>
-              <p className="text-green-600 text-sm">This interview covers both frontend and backend topics.</p>
-              <button className="mt-2 px-4 py-2 rounded bg-green-700 text-white text-sm font-semibold hover:bg-green-800 transition-colors">Take Interview</button>
-            </div>
-            <div className="bg-white rounded-2xl p-6 flex flex-col gap-4 shadow hover:shadow-lg border border-green-100">
-              <h3 className="text-xl font-bold text-green-800">DevOps & Cloud Interview</h3>
-              <p className="text-green-600 text-sm">Covers cloud, CI/CD, and infrastructure topics.</p>
-              <button className="mt-2 px-4 py-2 rounded bg-green-700 text-white text-sm font-semibold hover:bg-green-800 transition-colors">Take Interview</button>
-            </div>
-            <div className="bg-white rounded-2xl p-6 flex flex-col gap-4 shadow hover:shadow-lg border border-green-100">
-              <h3 className="text-xl font-bold text-green-800">HR Screening Interview</h3>
-              <p className="text-green-600 text-sm">Covers behavioral and HR screening questions.</p>
-              <button className="mt-2 px-4 py-2 rounded bg-green-700 text-white text-sm font-semibold hover:bg-green-800 transition-colors">Take Interview</button>
-            </div>
-            {/* Add more cards as needed */}
-          </div>
-        </main>
+            </section>
+          </main>
+        </div>
         {/* Modal for Create Interview */}
         {showModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
@@ -491,6 +578,58 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
+      {/* Footer */}
+      <footer className="bg-green-900 text-green-50 pt-12 pb-6 mt-12">
+        <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div>
+            <h3 className="text-2xl font-bold mb-2">IntelliHire</h3>
+            <p className="text-green-100 text-sm">Revolutionizing interview preparation with AI-powered practice sessions, real-time feedback, and personalized analytics.</p>
+          </div>
+          <div>
+            <h4 className="font-semibold mb-2">Platform</h4>
+            <ul className="space-y-1 text-green-100 text-sm">
+              <li>Dashboard</li>
+              <li>Create Interview</li>
+              <li>Practice Sessions</li>
+              <li>Analytics</li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-semibold mb-2">Features</h4>
+            <ul className="space-y-1 text-green-100 text-sm">
+              <li>AI-Powered Interviews</li>
+              <li>Real-Time Feedback</li>
+              <li>Performance Analytics</li>
+              <li>Secure & Private</li>
+              <li>Multiple Interview Types</li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-semibold mb-2">Connect</h4>
+            <div className="flex space-x-6 mt-2">
+              {/* GitHub */}
+              <a href="https://github.com/chit-21" aria-label="GitHub" target="_blank" rel="noopener noreferrer" className="hover:text-green-300">
+                <svg width="28" height="28" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.484 2 12.021c0 4.428 2.865 8.184 6.839 9.504.5.092.682-.217.682-.482 0-.237-.009-.868-.014-1.703-2.782.605-3.369-1.342-3.369-1.342-.454-1.154-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.004.07 1.532 1.032 1.532 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.339-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.025A9.564 9.564 0 0 1 12 6.844c.85.004 1.705.115 2.504.337 1.909-1.295 2.748-1.025 2.748-1.025.546 1.378.202 2.397.1 2.65.64.7 1.028 1.595 1.028 2.688 0 3.847-2.338 4.695-4.566 4.944.359.309.678.919.678 1.852 0 1.336-.012 2.417-.012 2.747 0 .267.18.577.688.48C19.138 20.2 22 16.447 22 12.021 22 6.484 17.523 2 12 2z"/></svg>
+              </a>
+              {/* X (Twitter) */}
+              <a href="https://x.com/schitranshu040" aria-label="X" target="_blank" rel="noopener noreferrer" className="hover:text-green-300">
+                <svg width="24" height="24" fill="currentColor" viewBox="0 0 1200 1227"><path d="M714.6 541.1 1156.2 0h-105.1L670.2 464.7 332.2 0H0l463.2 658.6L0 1227h105.1l406.2-470.2 353.6 470.2H1200L714.6 541.1zm-143.7 166.3-47.1-65.3L134.8 80.7h151.2l273.2 378.7 47.1 65.3 399.7 553.2H854.8L570.9 707.4z"/></svg>
+              </a>
+              {/* Instagram */}
+              <a href="https://www.instagram.com/singh__chitranshu" aria-label="Instagram" target="_blank" rel="noopener noreferrer" className="hover:text-green-300">
+                <svg width="28" height="28" fill="currentColor" viewBox="0 0 24 24"><path d="M7.75 2h8.5A5.75 5.75 0 0 1 22 7.75v8.5A5.75 5.75 0 0 1 16.25 22h-8.5A5.75 5.75 0 0 1 2 16.25v-8.5A5.75 5.75 0 0 1 7.75 2zm0 1.5A4.25 4.25 0 0 0 3.5 7.75v8.5A4.25 4.25 0 0 0 7.75 20.5h8.5A4.25 4.25 0 0 0 20.5 16.25v-8.5A4.25 4.25 0 0 0 16.25 3.5zm4.25 3.25a5.25 5.25 0 1 1 0 10.5 5.25 5.25 0 0 1 0-10.5zm0 1.5a3.75 3.75 0 1 0 0 7.5 3.75 3.75 0 0 0 0-7.5zm5.25.75a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm-5.25 2.25a2.75 2.75 0 1 1 0 5.5 2.75 2.75 0 0 1 0-5.5z"/></svg>
+              </a>
+              {/* Email */}
+              <a href="mailto:schitranshu040@gmail.com" target="_blank" rel="noopener noreferrer" aria-label="Email" className="hover:text-green-300">
+                <svg width="28" height="28" fill="currentColor" viewBox="0 0 24 24"><path d="M12 13.065l-11.2-8.065h22.4l-11.2 8.065zm11.2-9.065h-22.4c-.442 0-.8.358-.8.8v16.4c0 .442.358.8.8.8h22.4c.442 0 .8-.358.8-.8v-16.4c0-.442-.358-.8-.8-.8zm-11.2 10.935l-11.2-8.065v14.13h22.4v-14.13l-11.2 8.065z"/></svg>
+              </a>
+            </div>
+          </div>
+        </div>
+        <div className="text-center text-green-200 text-sm mt-8">
+           © 2025 IntelliHire. All rights reserved.
+         </div>
+      </footer>
     </ProtectedRoute>
   );
 }
