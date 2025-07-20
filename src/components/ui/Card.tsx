@@ -1,18 +1,62 @@
 import React from 'react';
 import clsx from 'clsx';
 
-export const Card: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ className, ...props }) => (
-  <div className={clsx('bg-card text-card-foreground rounded-2xl shadow-card border border-border', className)} {...props} />
-);
+export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {}
 
-export const CardHeader: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ className, ...props }) => (
-  <div className={clsx('p-6 border-b border-border rounded-t-2xl', className)} {...props} />
-);
+export interface CardHeaderProps extends React.HTMLAttributes<HTMLDivElement> {}
 
-export const CardTitle: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ className, ...props }) => (
-  <div className={clsx('text-xl font-bold', className)} {...props} />
-);
+export interface CardTitleProps extends React.HTMLAttributes<HTMLHeadingElement> {}
 
-export const CardContent: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ className, ...props }) => (
-  <div className={clsx('p-6', className)} {...props} />
-); 
+export interface CardContentProps extends React.HTMLAttributes<HTMLDivElement> {}
+
+export const Card = React.forwardRef<HTMLDivElement, CardProps>(
+  ({ className, ...props }, ref) => (
+    <div
+      ref={ref}
+      className={clsx(
+        'rounded-lg border bg-card text-card-foreground shadow-sm',
+        className
+      )}
+      {...props}
+    />
+  )
+);
+Card.displayName = 'Card';
+
+export const CardHeader = React.forwardRef<HTMLDivElement, CardHeaderProps>(
+  ({ className, ...props }, ref) => (
+    <div
+      ref={ref}
+      className={clsx('flex flex-col space-y-1.5 p-6', className)}
+      {...props}
+    />
+  )
+);
+CardHeader.displayName = 'CardHeader';
+
+export const CardTitle = React.forwardRef<HTMLHeadingElement, CardTitleProps>(
+  ({ className, ...props }, ref) => (
+    <h3
+      ref={ref}
+      className={clsx(
+        'text-2xl font-semibold leading-none tracking-tight',
+        className
+      )}
+      {...props}
+    />
+  )
+);
+CardTitle.displayName = 'CardTitle';
+
+export const CardContent = React.forwardRef<HTMLDivElement, CardContentProps>(
+  ({ className, ...props }, ref) => (
+    <div
+      ref={ref}
+      className={clsx('p-6 pt-0', className)}
+      {...props}
+    />
+  )
+);
+CardContent.displayName = 'CardContent';
+
+export default Card; 

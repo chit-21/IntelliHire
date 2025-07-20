@@ -43,3 +43,57 @@ input[type="password"],
 input:not([type]) {
   color: var(--color-text, #171717);
 }
+
+/* Custom animations */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes floatTag {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-19px);
+  }
+}
+
+.animate-float-tag {
+  animation: floatTag 2.2s ease-in-out infinite;
+}
+.animate-float-tag-delay-1 {
+  animation: floatTag 2.2s ease-in-out infinite;
+  animation-delay: 0.4s;
+}
+.animate-float-tag-delay-2 {
+  animation: floatTag 2.2s ease-in-out infinite;
+  animation-delay: 0.8s;
+}
+.animate-float-tag-delay-3 {
+  animation: floatTag 2.2s ease-in-out infinite;
+  animation-delay: 1.2s;
+}

@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Progress } from '@/components/ui/Progress';
 import Image from 'next/image';
+import HeroBackground from '@/components/ui/HeroBackground';
 
 // Interview type definition
 interface Interview {
@@ -34,34 +35,55 @@ const TECH_STACK_OPTIONS = [
 // Hero Section
 function HeroSection({ userEmail, onCreateInterview }: { userEmail?: string; onCreateInterview: () => void }) {
   return (
-    <div className="relative bg-gradient-primary overflow-hidden">
-      <div className="absolute inset-0 bg-primary/80"></div>
-      <div className="relative container mx-auto px-6 py-16">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div className="space-y-8">
-            <div className="flex items-center gap-4">
-              <Image src="/logo.png" alt="IntellHire Logo" width={48} height={48} className="w-12 h-12" />
-              <h1 className="text-3xl font-bold text-primary-foreground">IntellHire</h1>
-            </div>
-            <div className="space-y-6">
+    <div className="relative bg-white rounded-3xl overflow-hidden shadow-2xl border border-green-100 h-[350px] flex items-center mt-3"> {/* Slightly increased height */}
+      {/* SVG Background */}
+      <HeroBackground className="opacity-90" />
+      {/* Overlay for better text readability */}
+      <div className="absolute inset-0 bg-gradient-to-r from-green-900/5 to-green-800/5"></div>
+      {/* Content */}
+      <div className="relative z-10 w-full px-4 py-8 lg:pl-12 lg:pr-18 lg:py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-center justify-center">
+          <div className="space-y-4">
+            <div className="flex flex-col h-full justify-between pt-2 pb-4"> {/* Reduced top padding, full height, spaced content */}
               <div>
-                <h2 className="text-5xl font-bold text-primary-foreground mb-4">Dashboard</h2>
-                <p className="text-xl text-primary-foreground/90">Welcome back, {userEmail}</p>
-                <p className="text-lg text-primary-foreground/80 mt-2">Master your interview skills with AI-powered practice sessions</p>
+                <h2 className="text-3xl font-bold text-white mb-1 drop-shadow-lg">Welcome Back!</h2>
+                <p className="text-lg text-white/95 font-medium">Hello, Mate</p>
+                <div className="mt-2 text-base text-white/85 space-y-1">
+                  <p>Ready to ace your next interview? Create a new session and practice with our AI-powered questions tailored just for you.</p>
+                  <p>Track your progress, get instant feedback, and improve your skills with realistic mock interviews.</p>
+                  <p>Supports technical, behavioral, and custom interview types for all experience levels.</p>
+                </div>
               </div>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button variant="secondary" size="lg" className="bg-white text-primary hover:bg-white/90 shadow-elegant text-lg px-8 py-4 h-auto" onClick={onCreateInterview}>
+              <div className="flex flex-col sm:flex-row gap-2 mt-4">
+                <Button 
+                  variant="secondary" 
+                  size="sm" 
+                  className="bg-white/95 backdrop-blur-sm text-green-700 hover:bg-green-700 hover:text-white shadow-xl hover:shadow-2xl text-base px-6 py-2 h-auto font-bold transition-colors transition-transform duration-300 border-2 border-white/30 hover:border-white/50 self-start transform hover:scale-105" 
+                  onClick={onCreateInterview}
+                >
                   + Create Interview
                 </Button>
               </div>
             </div>
           </div>
-          <div className="flex justify-center lg:justify-end">
-            <div className="relative">
-              <div className="absolute inset-0 bg-white/10 rounded-full blur-3xl"></div>
-              <Image src="/robot-mascot.png" alt="AI Interview Assistant" width={320} height={320} className="relative w-80 h-80 object-contain animate-float" />
+          <div className="flex justify-end items-center h-full relative w-full max-w-xs mx-auto mr-2 lg:mr-12"> {/* Shifted further right */}
+              {/* Tech tags */}
+              <Image src="/css.png" alt="CSS" width={58} height={58} className="absolute left-0 top-4 z-10 -rotate-12 animate-float-tag" />
+              <Image src="/html.png" alt="HTML" width={62} height={62} className="absolute left-2 bottom-2 z-10 animate-float-tag-delay-1" />
+              <Image src="/js.png" alt="JS" width={66} height={66} className="absolute right-2 bottom-2 z-10 animate-float-tag-delay-2" />
+              <Image src="/php.png" alt="PHP" width={64} height={65} className="absolute right-0 top-4 z-10 animate-float-tag-delay-3" />
+              {/* Robot image */}
+              <div className="relative bg-white/10 backdrop-blur-sm rounded-2xl p-1 border border-white/20 flex items-center justify-center w-[220px] h-[220px] lg:w-[288px] lg:h-[288px] overflow-visible"> {/* Fixed smaller box, allow overflow */}
+                <Image 
+                  src="/robot.png" 
+                  alt="AI Interview Assistant" 
+                  width={440} 
+                  height={440} 
+                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] lg:w-[700px] lg:h-[700px] object-contain drop-shadow-2xl" 
+                  style={{zIndex: 2}} 
+                />
+              </div>
             </div>
-          </div>
         </div>
       </div>
     </div>
@@ -307,9 +329,12 @@ export default function DashboardPage() {
     <ProtectedRoute>
       <div className="min-h-screen bg-background flex flex-col">
         <div className="w-full max-w-7xl mx-auto px-4 flex flex-col">
-          {/* Top-right Sign Out button */}
-          <div className="w-full flex justify-end pt-6">
-            <Button onClick={handleSignOut} className="bg-green-700 hover:bg-green-800 text-white font-semibold px-6 py-2 rounded-lg shadow">
+          <div className="w-full flex justify-between items-center pt-6 mb-4">
+            <div className="flex items-center gap-3">
+              <Image src="/logo.png" alt="IntellHire Logo" width={56} height={56} className="w-14 h-14" />
+              <h1 className="text-4xl font-bold text-green-800">IntelliHire</h1>
+            </div>
+            <Button onClick={handleSignOut} className="bg-green-700 hover:bg-green-800 text-white font-semibold px-6 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300">
               Sign Out
             </Button>
           </div>
