@@ -27,10 +27,30 @@ interface Interview {
   [key: string]: any;
 }
 
-// Tech stack options (can be expanded)
+// Tech stack options (comprehensive list)
 const TECH_STACK_OPTIONS = [
-  'React', 'Node.js', 'Python', 'Java', 'C++', 'TypeScript', 'SQL', 'AWS', 'Docker', 'Other'
-];
+  // Frontend
+  'React', 'Angular', 'Vue.js', 'Next.js', 'Svelte', 'jQuery', 'TypeScript', 'JavaScript',
+  'HTML5', 'CSS3', 'Sass/SCSS', 'Tailwind CSS', 'Bootstrap', 'Material-UI', 'Redux', 'GraphQL',
+  // Backend
+  'Node.js', 'Express.js', 'Django', 'Flask', 'Spring Boot', 'Laravel', 'Ruby on Rails',
+  'ASP.NET Core', 'FastAPI', 'NestJS',
+  // Programming Languages
+  'Python', 'Java', 'C++', 'C#', 'Ruby', 'PHP', 'Go', 'Rust', 'Swift', 'Kotlin',
+  // Databases
+  'MongoDB', 'PostgreSQL', 'MySQL', 'Redis', 'SQLite', 'Oracle', 'Microsoft SQL Server',
+  'Firebase', 'DynamoDB', 'Cassandra',
+  // Cloud & DevOps
+  'AWS', 'Azure', 'Google Cloud', 'Docker', 'Kubernetes', 'Jenkins', 'GitLab CI/CD',
+  'Terraform', 'Ansible', 'Linux',
+  // Mobile
+  'React Native', 'Flutter', 'iOS', 'Android', 'Xamarin', 'Ionic',
+  // Testing
+  'Jest', 'Cypress', 'Selenium', 'JUnit', 'PyTest', 'Mocha',
+  // Other
+  'WebSocket', 'REST API', 'Microservices', 'Machine Learning', 'AI', 'Blockchain',
+  'WebRTC', 'OAuth', 'JWT', 'WebAssembly'
+].sort();
 
 // Hero Section
 function HeroSection({ userEmail, onCreateInterview }: { userEmail?: string; onCreateInterview: () => void }) {
@@ -145,20 +165,20 @@ function InterviewCard({ interview, createdAt, onViewFeedback, onTakeAgain, onTa
         <div className="flex gap-2 pt-4 mt-auto">
           {status === 'Completed' && (
             <>
-              <Button variant="default" className={`flex-1 ${buttonClass}`} onClick={onViewFeedback} disabled={feedbackLoading}>{feedbackLoading ? 'Loading...' : 'View Feedback'}</Button>
-              <Button variant="default" className={`flex-1 ${buttonClass}`} onClick={onTakeAgain}>Take Again</Button>
+              <Button variant="default" size="sm" className={`flex-1 ${buttonClass}`} onClick={onViewFeedback} disabled={feedbackLoading}>{feedbackLoading ? 'Loading...' : 'View Feedback'}</Button>
+              <Button variant="default" size="sm" className={`flex-1 ${buttonClass}`} onClick={onTakeAgain}>Take Again</Button>
             </>
           )}
           {status === 'Pending' && (
             <>
-              <Button variant="default" className={`flex-1 ${buttonClass}`} onClick={onTakeInterview}>Take Interview</Button>
-              <Button variant="outline" className="flex-1 opacity-50 cursor-not-allowed" disabled>No Feedback</Button>
+              <Button variant="default" size="sm" className={`flex-1 ${buttonClass}`} onClick={onTakeInterview}>Take Interview</Button>
+              <Button variant="outline" size="sm" className="flex-1 opacity-50 cursor-not-allowed" disabled>No Feedback</Button>
             </>
           )}
           {status === 'In Progress' && (
             <>
-              <Button variant="default" className={`flex-1 ${buttonClass}`} onClick={onTakeInterview}>Continue Interview</Button>
-              <Button variant="outline" className="flex-1 opacity-50 cursor-not-allowed" disabled>No Feedback</Button>
+              <Button variant="default" size="sm" className={`flex-1 ${buttonClass}`} onClick={onTakeInterview}>Continue Interview</Button>
+              <Button variant="outline" size="sm" className="flex-1 opacity-50 cursor-not-allowed" disabled>No Feedback</Button>
             </>
           )}
         </div>
@@ -188,6 +208,22 @@ export default function DashboardPage() {
   const [selectedFeedback, setSelectedFeedback] = useState<any>(null);
   const [feedbackLoading, setFeedbackLoading] = useState(false);
   const [formattedDates, setFormattedDates] = useState<string[]>([]);
+  const [filteredTech, setFilteredTech] = useState<string[]>([]);
+  const [showTechDropdown, setShowTechDropdown] = useState(false);
+  const [showTechOptions, setShowTechOptions] = useState(false);
+  
+  // Add click outside listener to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showTechDropdown) {
+        setShowTechDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showTechDropdown]);
 
   useEffect(() => {
     if (!user) return;
@@ -476,14 +512,64 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Tech Stack</label>
-                  <textarea
-                    name="techStack"
-                    value={form.techStack.join(", ")}
-                    onChange={e => setForm(prev => ({ ...prev, techStack: e.target.value.split(/,|\n/) }))}
-                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-300 min-h-[48px]"
-                    placeholder="Type your tech stack, separated by commas or new lines (e.g. React, Node.js, Python)"
-                  />
-                  {formErrors.techStack && <div className="text-red-500 text-xs mt-1">{formErrors.techStack}</div>}
+                  <div className="border rounded-lg p-4 space-y-4">
+                    {/* Selected Technologies */}
+                    <div className="flex flex-wrap gap-2">
+                      {form.techStack.map((tech, index) => (
+                        <span 
+                          key={index} 
+                          className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm flex items-center gap-2"
+                        >
+                          {tech}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setForm(prev => ({
+                                ...prev,
+                                techStack: prev.techStack.filter((_, i) => i !== index)
+                              }));
+                            }}
+                            className="text-green-600 hover:text-red-500 font-bold"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                    
+                    {/* Toggle Button */}
+                    <button
+                      type="button"
+                      onClick={() => setShowTechOptions(!showTechOptions)}
+                      className="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-green-50 hover:text-green-700 focus:outline-none focus:ring-2 focus:ring-green-300 border border-gray-200"
+                    >
+                      {showTechOptions ? '▼ Hide' : '▶ Show'} Technology Options ({TECH_STACK_OPTIONS.filter(tech => !form.techStack.includes(tech)).length} available)
+                    </button>
+                    
+                    {/* Technology Options */}
+                    {showTechOptions && (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-40 overflow-y-auto">
+                        {TECH_STACK_OPTIONS.filter(tech => !form.techStack.includes(tech)).map((tech) => (
+                          <button
+                            key={tech}
+                            type="button"
+                            onClick={() => {
+                              setForm(prev => ({
+                                ...prev,
+                                techStack: [...prev.techStack, tech]
+                              }));
+                            }}
+                            className="text-left px-3 py-2 text-sm rounded-lg hover:bg-green-50 hover:text-green-700 focus:outline-none focus:ring-2 focus:ring-green-300"
+                          >
+                            + {tech}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {formErrors.techStack && (
+                    <div className="text-red-500 text-xs mt-1">{formErrors.techStack}</div>
+                  )}
                 </div>
                 {submitError && <div className="text-red-500 text-center text-sm mb-2">{submitError}</div>}
                 <button

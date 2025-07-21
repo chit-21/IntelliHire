@@ -7,12 +7,12 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 const variantClasses = {
-  default: 'bg-[hsl(142,71%,40%)] text-white hover:bg-[hsl(142,71%,35%)]', // mid green
-  secondary: 'bg-secondary text-secondary-foreground hover:bg-accent',
-  outline: 'border border-border text-foreground bg-transparent hover:bg-muted',
-  feedback: 'bg-success text-success-foreground hover:bg-success/90',
-  retake: 'bg-accent text-accent-foreground hover:bg-accent/80',
-  create: 'bg-primary text-primary-foreground hover:bg-primary/80',
+  default: 'bg-[hsl(142,71%,40%)] text-white hover:bg-white hover:text-[hsl(142,71%,40%)] hover:border-[hsl(142,71%,40%)] border-2 border-transparent',
+  secondary: 'bg-white text-green-700 hover:bg-green-700 hover:text-white border-2 border-green-700',
+  outline: 'border-2 border-[hsl(142,71%,40%)] text-[hsl(142,71%,40%)] bg-transparent hover:bg-[hsl(142,71%,40%)] hover:text-white',
+  feedback: 'bg-success text-white hover:bg-white hover:text-success hover:border-success border-2 border-transparent',
+  retake: 'bg-accent text-white hover:bg-white hover:text-accent hover:border-accent border-2 border-transparent',
+  create: 'bg-green-700 text-white hover:bg-white hover:text-green-700 border-2 border-green-700',
 };
 
 const sizeClasses = {
@@ -26,7 +26,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     <button
       ref={ref}
       className={clsx(
-        'transition-colors font-bold shadow focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60',
+        'transition-colors transition-transform duration-300 font-bold shadow focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60',
+        'hover:scale-105 hover:shadow-xl',
         variantClasses[variant],
         sizeClasses[size],
         className

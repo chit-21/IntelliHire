@@ -7,17 +7,12 @@ import { useRouter } from "next/navigation";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc, setDoc } from "firebase/firestore";
 import Webcam from "react-webcam";
-
-// Add type for SpeechRecognition
-const SpeechRecognition =
-  typeof window !== "undefined"
-    ? (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-    : null;
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function InterviewPage({ params }: { params: { id: string } }) {
-  // NOTE: In future Next.js, params will be a Promise and should be unwrapped with use(params). For now, use directly.
   const { id } = params;
   const router = useRouter();
+  const { user } = useAuth();
   const [interview, setInterview] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -28,6 +23,8 @@ export default function InterviewPage({ params }: { params: { id: string } }) {
   const [recording, setRecording] = useState(false);
   const [currentTranscript, setCurrentTranscript] = useState('');
   const recognitionRef = useRef<any>(null);
+  const answerBoxRef = useRef<HTMLDivElement>(null);
+  const recordingBoxRef = useRef<HTMLUListElement>(null);
 
   const {
     error: speechError,
@@ -61,6 +58,16 @@ export default function InterviewPage({ params }: { params: { id: string } }) {
     };
     fetchInterview();
   }, [id]);
+
+  // Auto scroll to bottom when new content is added
+  useEffect(() => {
+    if (answerBoxRef.current) {
+      answerBoxRef.current.scrollTop = answerBoxRef.current.scrollHeight;
+    }
+    if (recordingBoxRef.current) {
+      recordingBoxRef.current.scrollTop = recordingBoxRef.current.scrollHeight;
+    }
+  }, [currentTranscript, results]);
 
   const handleRecordAnswer = () => {
     if (isRecording) {
@@ -127,7 +134,11 @@ export default function InterviewPage({ params }: { params: { id: string } }) {
             score: feedbackData.overallScore
           });
           alert('Interview completed successfully! Redirecting to dashboard...');
-          router.push('/dashboard');
+          if (user) {
+            router.push('/dashboard');
+          } else {
+            router.push('/login');
+          }
         } catch (err) {
           if (err instanceof Error) {
             alert('Failed to generate feedback: ' + err.message);
@@ -201,14 +212,14 @@ export default function InterviewPage({ params }: { params: { id: string } }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100">
-        <div className="text-blue-600 text-xl font-bold">Loading interview...</div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-green-100">
+        <div className="text-green-600 text-xl font-bold">Loading interview...</div>
       </div>
     );
   }
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-green-100">
         <div className="text-red-500 text-lg font-semibold">{error}</div>
       </div>
     );
@@ -218,22 +229,22 @@ export default function InterviewPage({ params }: { params: { id: string } }) {
   const questions = interview.questions || [];
 
   return (
-    <div className="min-h-screen flex flex-col items-center bg-gradient-to-br from-blue-50 to-blue-100 py-12">
-      <div className="w-full max-w-5xl bg-white rounded-2xl shadow-xl p-0 flex flex-col md:flex-row overflow-hidden">
+    <div className="min-h-screen flex flex-col items-center bg-gradient-to-br from-green-50 to-green-100 py-6">
+      <div className="w-full max-w-5xl bg-white rounded-2xl shadow-[0_4px_24px_0_rgba(34,197,94,0.15)] hover:shadow-[0_8px_32px_0_rgba(34,197,94,0.22)] transition-shadow duration-300 p-0 flex flex-col md:flex-row overflow-hidden max-h-[85vh]">
         {/* Left: Question Tabs and Navigation */}
-        <div className="md:w-1/2 w-full bg-blue-50 p-8 flex flex-col">
-          <h1 className="text-2xl font-extrabold text-blue-800 mb-4">{interview.role}</h1>
-          <div className="flex flex-wrap gap-2 mb-4">
-            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-200 text-blue-800">{interview.type}</span>
+        <div className="md:w-1/2 w-full bg-green-50 p-6 flex flex-col border-r border-green-100 overflow-hidden">
+          <h1 className="text-xl font-extrabold text-green-800 mb-3">{interview.role}</h1>
+          <div className="flex flex-wrap gap-2 mb-3">
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-200 text-green-800">{interview.type}</span>
             {interview.techStack && interview.techStack.map((tech: string, idx: number) => (
-              <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">{tech}</span>
+              <span key={idx} className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs font-medium">{tech}</span>
             ))}
           </div>
-          <div className="flex gap-2 mb-6">
+          <div className="flex gap-1.5 mb-4">
             {questions.map((_: string, idx: number) => (
               <button
                 key={idx}
-                className={`rounded-full w-8 h-8 flex items-center justify-center font-bold text-white transition-all ${idx === currentQ ? 'bg-blue-600 scale-110 shadow-lg' : 'bg-blue-300'}`}
+                className={`rounded-full w-7 h-7 flex items-center justify-center font-bold text-white transition-all ${idx === currentQ ? 'bg-green-600 scale-110 shadow-lg' : 'bg-green-300'}`}
                 onClick={() => setCurrentQ(idx)}
                 disabled={idx > currentQ}
               >
@@ -241,13 +252,13 @@ export default function InterviewPage({ params }: { params: { id: string } }) {
               </button>
             ))}
           </div>
-          <div className="flex-1 flex flex-col justify-center">
-            <div className="text-lg font-semibold text-blue-700 mb-2">Question {currentQ + 1} of {questions.length}</div>
-            <div className="text-gray-800 text-xl bg-white rounded-lg p-6 shadow mb-4 min-h-[80px] flex items-center">
+          <div className="flex-1 flex flex-col min-h-0">
+            <div className="text-base font-semibold text-green-700 mb-2">Question {currentQ + 1} of {questions.length}</div>
+            <div className="text-gray-800 text-lg bg-white rounded-lg p-4 shadow mb-4 flex-1 overflow-y-auto">
               {questions[currentQ]}
             </div>
             <button
-              className="mt-4 px-6 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors shadow self-end disabled:bg-blue-400 disabled:cursor-not-allowed"
+              className="px-5 py-2 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 transition-colors shadow self-end disabled:bg-green-400 disabled:cursor-not-allowed text-sm"
               onClick={handleSubmitAnswer}
               disabled={submitting}
             >
@@ -256,9 +267,9 @@ export default function InterviewPage({ params }: { params: { id: string } }) {
           </div>
         </div>
         {/* Right: Webcam, Record, Transcript */}
-        <div className="md:w-1/2 w-full p-8 flex flex-col items-center justify-center bg-gradient-to-br from-blue-100 to-blue-200">
+        <div className="md:w-1/2 w-full p-8 flex flex-col items-center justify-center bg-gradient-to-br from-green-200 to-green-300 overflow-y-auto">
           <div className="w-full flex flex-col items-center">
-            <div className="bg-black w-full max-w-lg aspect-video flex items-center justify-center rounded-xl mb-6">
+            <div className="bg-black w-full max-w-lg aspect-video flex items-center justify-center rounded-xl mb-6 shadow-[0_4px_12px_0_rgba(34,197,94,0.25)]">
               {isRecording ? (
                 <Webcam
                   audio={false}
@@ -268,39 +279,57 @@ export default function InterviewPage({ params }: { params: { id: string } }) {
               ) : (
                 <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <circle cx="60" cy="60" r="50" fill="#F3F4F6" />
-                  <circle cx="60" cy="60" r="30" fill="#60A5FA" />
-                  <circle cx="60" cy="60" r="15" fill="#2563EB" />
+                  <circle cx="60" cy="60" r="30" fill="#22C55E" />
+                  <circle cx="60" cy="60" r="15" fill="#16A34A" />
                   <circle cx="60" cy="60" r="6" fill="#fff" />
                   <circle cx="90" cy="35" r="5" fill="#EF4444" />
                 </svg>
               )}
             </div>
             <button
-              className="mb-4 px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold shadow"
+              className="mb-4 px-4 py-2 rounded bg-white/90 backdrop-blur-sm text-gray-800 font-semibold shadow-[0_2px_8px_0_rgba(34,197,94,0.15)] hover:shadow-[0_4px_12px_0_rgba(34,197,94,0.25)] hover:bg-white transition-all"
               onClick={handleRecordAnswer}
             >
               {isRecording ? 'Stop Recording' : 'Record Answer'}
             </button>
             <button
-              className="mb-2 px-4 py-2 rounded bg-blue-600 text-white font-semibold shadow"
+              className="mb-4 px-4 py-2 rounded bg-green-600 text-white font-semibold shadow-[0_2px_8px_0_rgba(34,197,94,0.25)] hover:shadow-[0_4px_12px_0_rgba(34,197,94,0.35)] hover:bg-green-700 transition-all"
               onClick={handleShowAnswer}
               disabled={results.length === 0 && !interimResult}
             >
               Show Answer
             </button>
-            <div className="w-full max-w-lg bg-white rounded p-4 mt-2 shadow">
+            <div className="w-full max-w-lg bg-white/90 backdrop-blur-sm rounded-lg p-4 mt-2 shadow-[0_4px_12px_0_rgba(34,197,94,0.15)]">
               <p className="font-medium text-gray-700 mb-2">Current Answer:</p>
-              <p className="text-gray-800">{currentTranscript || 'No answer recorded yet'}</p>
+              <div 
+                ref={answerBoxRef}
+                className="text-gray-800 max-h-[3.6em] overflow-y-auto scroll-smooth"
+                style={{
+                  lineHeight: '1.8em',
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: '#22C55E transparent'
+                }}
+              >
+                {currentTranscript || 'No answer recorded yet'}
+              </div>
             </div>
             {isRecording && (
-              <ul className="w-full max-w-lg bg-white rounded p-4 mt-2 shadow">
+              <ul 
+                ref={recordingBoxRef}
+                className="w-full max-w-lg bg-white/90 backdrop-blur-sm rounded-lg p-4 mt-4 shadow-[0_4px_12px_0_rgba(34,197,94,0.15)] max-h-[3.6em] overflow-y-auto scroll-smooth"
+                style={{
+                  lineHeight: '1.8em',
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: '#22C55E transparent'
+                }}
+              >
                 {results.filter((result) => typeof result === 'object' && 'transcript' in result && 'timestamp' in result).map((result: any) => (
                   <li key={result.timestamp} className="text-gray-800">{result.transcript}</li>
                 ))}
                 {interimResult && <li className="text-gray-500">{interimResult}</li>}
               </ul>
             )}
-            {speechError && <p className="text-red-500">Web Speech API is not available in this browser 🤷‍</p>}
+            {speechError && <p className="text-red-500 mt-4">Web Speech API is not available in this browser 🤷‍</p>}
           </div>
         </div>
       </div>
