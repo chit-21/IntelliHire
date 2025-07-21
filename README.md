@@ -1,6 +1,8 @@
 # 🤖 IntelliHire
 
-![IntelliHire Logo](public/logos.png)
+<p align="center">
+  <img src="public/logos.png" alt="IntelliHire Logo" width="180" />
+</p>
 
 > Revolutionizing interview preparation with AI-powered practice sessions, real-time feedback, and personalized analytics.
 
