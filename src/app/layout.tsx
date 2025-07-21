@@ -17,6 +17,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" href="/logos.png" />
+      </head>
       <body className={inter.className}>
         <Toaster position="bottom-right" />
         <AuthProvider>

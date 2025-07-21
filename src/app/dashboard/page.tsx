@@ -82,6 +82,15 @@ function HeroSection({ userEmail, onCreateInterview }: { userEmail?: string; onC
                   className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] lg:w-[700px] lg:h-[700px] object-contain drop-shadow-2xl" 
                   style={{zIndex: 2}} 
                 />
+                {/* Overlay logo at center of laptop screen */}
+                <Image
+                  src="/logos.png"
+                  alt="IntelliHire Logo Center"
+                  width={40}
+                  height={40}
+                  className="absolute left-1/2 top-[62%] -translate-x-1/2 -translate-y-1/2 z-30 w-10 h-10 lg:w-18 lg:h-14"
+                  style={{ pointerEvents: 'none' }}
+                />
               </div>
             </div>
         </div>
@@ -331,7 +340,7 @@ export default function DashboardPage() {
         <div className="w-full max-w-7xl mx-auto px-4 flex flex-col">
           <div className="w-full flex justify-between items-center pt-6 mb-4">
             <div className="flex items-center gap-3">
-              <Image src="/logo.png" alt="IntellHire Logo" width={56} height={56} className="w-14 h-14" />
+              <Image src="/logos.png" alt="IntellHire Logo" width={56} height={56} className="w-19 h-14" />
               <h1 className="text-4xl font-bold text-green-800">IntelliHire</h1>
             </div>
             <Button onClick={handleSignOut} className="bg-green-700 hover:bg-green-800 text-white font-semibold px-6 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300">
@@ -397,8 +406,14 @@ export default function DashboardPage() {
         </div>
         {/* Modal for Create Interview */}
         {showModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-            <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-lg relative animate-fadeIn">
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/30"
+            onClick={() => setShowModal(false)}
+          >
+            <div
+              className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-lg relative animate-fadeIn"
+              onClick={e => e.stopPropagation()}
+            >
               <button
                 className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl font-bold"
                 onClick={() => setShowModal(false)}
@@ -410,17 +425,14 @@ export default function DashboardPage() {
               <form onSubmit={handleFormSubmit} className="space-y-5">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Interview Type</label>
-                  <select
+                  <input
+                    type="text"
                     name="type"
                     value={form.type}
                     onChange={handleFormChange}
                     className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-300"
-                  >
-                    <option value="">Select type</option>
-                    <option value="Technical">Technical</option>
-                    <option value="Behavioral">Behavioral</option>
-                    <option value="Mixed">Mixed</option>
-                  </select>
+                    placeholder="e.g. Technical, Behavioral, Mixed"
+                  />
                   {formErrors.type && <div className="text-red-500 text-xs mt-1">{formErrors.type}</div>}
                 </div>
                 <div>
@@ -438,53 +450,39 @@ export default function DashboardPage() {
                 <div className="flex gap-4">
                   <div className="flex-1">
                     <label className="block text-sm font-semibold text-gray-700 mb-1">Years of Experience</label>
-                    <select
+                    <input
+                      type="text"
                       name="years"
                       value={form.years}
                       onChange={handleFormChange}
                       className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-300"
-                    >
-                      <option value="">Select</option>
-                      <option value="0-1">0-1</option>
-                      <option value="2-3">2-3</option>
-                      <option value="4-6">4-6</option>
-                      <option value="7+">7+</option>
-                    </select>
+                      placeholder="e.g. 0-1, 2-3, 4-6, 7+"
+                    />
                     {formErrors.years && <div className="text-red-500 text-xs mt-1">{formErrors.years}</div>}
                   </div>
                   <div className="flex-1">
                     <label className="block text-sm font-semibold text-gray-700 mb-1">No. of Questions</label>
-                    <select
+                    <input
+                      type="number"
                       name="numQuestions"
                       value={form.numQuestions}
                       onChange={handleFormChange}
                       className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-300"
-                    >
-                      <option value="">Select</option>
-                      <option value="3">3</option>
-                      <option value="5">5</option>
-                      <option value="10">10</option>
-                    </select>
+                      placeholder="e.g. 5"
+                      min={1}
+                    />
                     {formErrors.numQuestions && <div className="text-red-500 text-xs mt-1">{formErrors.numQuestions}</div>}
                   </div>
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Tech Stack</label>
-                  <div className="flex flex-wrap gap-2">
-                    {TECH_STACK_OPTIONS.map((tech) => (
-                      <label key={tech} className="flex items-center gap-1 bg-green-50 px-3 py-1 rounded-lg cursor-pointer text-green-700 text-xs font-medium">
-                        <input
-                          type="checkbox"
-                          name="techStack"
-                          value={tech}
-                          checked={form.techStack.includes(tech)}
-                          onChange={handleFormChange}
-                          className="accent-green-600"
-                        />
-                        {tech}
-                      </label>
-                    ))}
-                  </div>
+                  <textarea
+                    name="techStack"
+                    value={form.techStack.join(", ")}
+                    onChange={e => setForm(prev => ({ ...prev, techStack: e.target.value.split(/,|\n/) }))}
+                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-300 min-h-[48px]"
+                    placeholder="Type your tech stack, separated by commas or new lines (e.g. React, Node.js, Python)"
+                  />
                   {formErrors.techStack && <div className="text-red-500 text-xs mt-1">{formErrors.techStack}</div>}
                 </div>
                 {submitError && <div className="text-red-500 text-center text-sm mb-2">{submitError}</div>}
