@@ -9,7 +9,12 @@ import { doc, getDoc, updateDoc, setDoc } from "firebase/firestore";
 import Webcam from "react-webcam";
 import { useAuth } from '@/contexts/AuthContext';
 
-export default function InterviewPage({ params }: { params: { id: string } }) {
+type PageProps = {
+  params: { id: string };
+  searchParams: { [key: string]: string | string[] | undefined };
+};
+
+export default function InterviewPage({ params }: PageProps) {
   const { id } = params;
   const router = useRouter();
   const { user } = useAuth();
