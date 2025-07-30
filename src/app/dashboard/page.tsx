@@ -94,14 +94,16 @@ function HeroSection({ userEmail, onCreateInterview }: { userEmail?: string; onC
               <Image src="/php.png" alt="PHP" width={64} height={65} className="absolute right-0 top-4 z-10 animate-float-tag-delay-3" />
               {/* Robot image */}
               <div className="relative bg-white/10 backdrop-blur-sm rounded-2xl p-1 border border-white/20 flex items-center justify-center w-[220px] h-[220px] lg:w-[288px] lg:h-[288px] overflow-visible"> {/* Fixed smaller box, allow overflow */}
+               <div className="robot-illustration">
                 <Image 
-                  src="/robot.png" 
-                  alt="AI Interview Assistant" 
-                  width={440} 
-                  height={440} 
-                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] lg:w-[700px] lg:h-[700px] object-contain drop-shadow-2xl" 
-                  style={{zIndex: 2}} 
-                />
+              src="/robot.png" 
+              alt="AI Interview Assistant" 
+              width={440} 
+              height={440} 
+              className="hidden sm:block absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] lg:w-[700px] lg:h-[700px] object-contain drop-shadow-2xl" 
+              style={{ zIndex: 2 }} 
+/>
+                </div> 
                 {/* Overlay logo at center of laptop screen */}
                 <Image
                   src="/logos.png"
