@@ -32,7 +32,8 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100">
-      {/* AuthCard component would be rendered here if it were imported */}
+      <h2> Nothing to display plz login to continue </h2>
+
     </div>
   );
 }

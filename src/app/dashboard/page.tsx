@@ -7,9 +7,7 @@ import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, orderBy, addDoc, Timestamp, doc, getDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
-import { FiSearch, FiUser } from 'react-icons/fi';
 import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Progress } from '@/components/ui/Progress';
 import Image from 'next/image';
@@ -78,7 +76,7 @@ function HeroSection({ userEmail, onCreateInterview }: { userEmail?: string; onC
                 <Button 
                   variant="secondary" 
                   size="sm" 
-                  className="bg-white/95 backdrop-blur-sm text-green-700 hover:bg-green-700 hover:text-white shadow-xl hover:shadow-2xl text-base px-6 py-2 h-auto font-bold transition-colors transition-transform duration-300 border-2 border-white/30 hover:border-white/50 self-start transform hover:scale-105" 
+                  className="bg-white/95 backdrop-blur-sm text-green-700 hover:bg-green-700 hover:text-white shadow-xl hover:shadow-2xl text-base px-6 py-2 h-auto font-bold transition-transform duration-300 border-2 border-white/30 hover:border-white/50 self-start transform hover:scale-105" 
                   onClick={onCreateInterview}
                 >
                   + Create Interview

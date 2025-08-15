@@ -2,6 +2,7 @@
 
 import React from 'react';
 import useSpeechToText from 'react-hook-speech-to-text';
+import { toast } from 'react-hot-toast';
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { db } from "@/lib/firebase";
@@ -10,12 +11,12 @@ import Webcam from "react-webcam";
 import { useAuth } from '@/contexts/AuthContext';
 
 type PageProps = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
   searchParams: { [key: string]: string | string[] | undefined };
 };
 
 export default function InterviewPage({ params }: PageProps) {
-  const { id } = params;
+  const { id } = React.use(params);
   const router = useRouter();
   const { user } = useAuth();
   const [interview, setInterview] = useState<any>(null);
@@ -25,9 +26,7 @@ export default function InterviewPage({ params }: PageProps) {
   const [currentQ, setCurrentQ] = useState(0);
   const webcamRef = useRef<Webcam>(null);
   const [answers, setAnswers] = useState<string[]>([]);
-  const [recording, setRecording] = useState(false);
   const [currentTranscript, setCurrentTranscript] = useState('');
-  const recognitionRef = useRef<any>(null);
   const answerBoxRef = useRef<HTMLDivElement>(null);
   const recordingBoxRef = useRef<HTMLUListElement>(null);
 
@@ -77,32 +76,37 @@ export default function InterviewPage({ params }: PageProps) {
   const handleRecordAnswer = () => {
     if (isRecording) {
       stopSpeechToText();
-    } else {
-      startSpeechToText();
-    }
-  };
-
-  const handleShowAnswer = () => {
+      // handleShowAnswer();
     const fullTranscript = results
       .filter((result) => typeof result === 'object' && 'transcript' in result)
       .map((result: any) => result.transcript)
       .join(' ')
       .trim();
     setCurrentTranscript(fullTranscript);
+    results.length=0;
+      
+    } else {
+      setCurrentTranscript('');
+      results.length=0;
+      startSpeechToText();
+    }
   };
 
+
+
   const clearRecording = () => {
-    setCurrentTranscript('');
+    // setCurrentTranscript('');
+    results.length = 0;
     if (isRecording) {
       stopSpeechToText();
     }
     // @ts-ignore - Clear results array
-    results.length = 0;
+    
   };
 
   const handleSubmitAnswer = async () => {
     if (!currentTranscript.trim()) {
-      alert('Please record your answer before proceeding.');
+      toast.error('Please record your answer before proceeding.');
       return;
     }
 
@@ -123,7 +127,7 @@ export default function InterviewPage({ params }: PageProps) {
         const answersData = await fetchAllAnswers();
         // Check for empty answers
         if (answersData.some(ans => !ans.trim())) {
-          alert('Please answer all questions before submitting the interview.');
+          toast.error('Please answer all questions before submitting the interview.');
           setSubmitting(false);
           return;
         }
@@ -138,7 +142,7 @@ export default function InterviewPage({ params }: PageProps) {
             completedAt: new Date().toISOString(),
             score: feedbackData.overallScore
           });
-          alert('Interview completed successfully! Redirecting to dashboard...');
+          toast.success('Interview completed successfully! Redirecting to dashboard...');
           if (user) {
             router.push('/dashboard');
           } else {
@@ -146,9 +150,9 @@ export default function InterviewPage({ params }: PageProps) {
           }
         } catch (err) {
           if (err instanceof Error) {
-            alert('Failed to generate feedback: ' + err.message);
+            toast.error('Failed to generate feedback: ' + err.message);
           } else {
-            alert('Failed to generate feedback.');
+            toast.error('Failed to generate feedback.');
           }
           setSubmitting(false);
           return;
@@ -159,7 +163,7 @@ export default function InterviewPage({ params }: PageProps) {
       }
     } catch (error) {
       console.error('Error saving answer:', error);
-      alert('Failed to save your answer. Please try again.');
+      toast.error('Failed to save your answer. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -297,13 +301,13 @@ export default function InterviewPage({ params }: PageProps) {
             >
               {isRecording ? 'Stop Recording' : 'Record Answer'}
             </button>
-            <button
+            {/* <button
               className="mb-4 px-4 py-2 rounded bg-green-600 text-white font-semibold shadow-[0_2px_8px_0_rgba(34,197,94,0.25)] hover:shadow-[0_4px_12px_0_rgba(34,197,94,0.35)] hover:bg-green-700 transition-all"
               onClick={handleShowAnswer}
               disabled={results.length === 0 && !interimResult}
             >
               Show Answer
-            </button>
+            </button> */}
             <div className="w-full max-w-lg bg-white/90 backdrop-blur-sm rounded-lg p-4 mt-2 shadow-[0_4px_12px_0_rgba(34,197,94,0.15)]">
               <p className="font-medium text-gray-700 mb-2">Current Answer:</p>
               <div 
